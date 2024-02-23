@@ -40,8 +40,9 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
         public bool isOut = false;
         public bool fromScroll = true;
         public bool firstTime = true;
+        public bool ok = false;
 
-        private float fixedW = 90.78f, fixedH = 72.6f;
+        private Vector3 offset;
 //
      private void Awake()
      {
@@ -53,7 +54,7 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
 
      private void Start()
      {
-         
+         rect = GetComponent<RectTransform>();
      }
 
      public void Init(HScrollController Controller)
@@ -74,7 +75,7 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
              clonePiece.transform.SetSiblingIndex(order);
              clonePiece.GetComponent<Image>().enabled = false;
              startPos = rect.position;
-             Debug.Log("ActivePieceDrag");
+
              // Set lại parent cho mảnh tranh, cập nhật mảnh tranh có thể được kéo và đang được kéo 
              // this.transform.SetParent(this.controller.parentDrag);
              transform.SetParent(controller.parentDrag);
@@ -132,14 +133,17 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
 
      private void Update()
      {
-         // var wordPos = GetMousePos(tempPos);
-         Vector2 screenPoint = Input.mousePosition ;
-         RectTransformUtility.ScreenPointToLocalPointInRectangle(rect, screenPoint, controller.camera, out var localPosition);
-         var wordPos = Camera.main.ScreenToWorldPoint(screenPoint);
-         wordPos.y += PuzzleController.Instance.pieces[0].renderer.bounds.size.y*0.5f;
-         wordPos.z = controller.zCor;
+         
          if (controller.canDrag && isDragging)
          {
+             // var wordPos = GetMousePos(tempPos);
+             Vector2 screenPoint = Input.mousePosition ;
+             RectTransformUtility.ScreenPointToLocalPointInRectangle(rect, screenPoint, controller.camera, out var localPosition);
+             var wordPos = Camera.main.ScreenToWorldPoint(screenPoint);
+             wordPos.x -= PuzzleController.Instance.pieces[0].renderer.bounds.size.x*(LevelCtl.currentSize/15f);
+             wordPos.y += PuzzleController.Instance.pieces[0].renderer.bounds.size.y * (LevelCtl.currentSize/12f);
+             wordPos.z = controller.zCor;
+             Vector3 pos = Input.mousePosition;
              // Di chuyển Rect Transform của mảnh tranh đến localPosition (Vị trí của chuột)
              rect.position = Vector3.Lerp(rect.position, wordPos, 1000 * Time.deltaTime);
              
@@ -153,8 +157,8 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
                  
                  if(firstTime)
                  {
-                     PuzzleController.Instance.pieces[id].transform.position =
-                         new Vector3(wordPos.x - dragPiece.size.x * 0.5f, wordPos.y + dragPiece.size.y * 0.5f, -1);
+                     PuzzleController.Instance.pieces[id].transform.position = 
+                         new Vector3(wordPos.x , wordPos.y + dragPiece.size.y * 0.5f, -1);
                      if(PuzzleController.Instance.pieces[id].transform.childCount > 0)
                          PuzzleController.Instance.pieces[id].transform.GetChild(0).gameObject.SetActive(true);
                      firstTime = false;
@@ -167,7 +171,7 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
                  transform.GetComponent<Image>().enabled = false;
                  if(fromScroll)
                     StartCoroutine(PieceOutAnim());
-                 
+                 ok = false;
                  // PuzzleController.Instance.currentPiece = id;
              }
          }
@@ -193,13 +197,19 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
                  var scale = piece.transform.GetComponent<Renderer>().bounds.size;
                  StartCoroutine(
                      PieceToScroll(scale));
+
+                 var parent = (gameObject.transform as RectTransform);
+                 var sprite = piece.transform.GetComponent<SpriteRenderer>().sprite;
                  
-                 // Debug.Log("Image width and height" + GetComponent<Image>().sprite.bounds.size + "Piece Size" + piece.size + "Piece Scale" + GetComponent<Image>().sprite.bounds.size.x / piece.renderer.bounds.size.x);
-                 piece.transform.localScale = Vector3.one * (GetComponent<Image>().sprite.bounds.size.x / piece.renderer.bounds.size.x);
-                 transform.SetParent(controller.parentDrag);
+                 if(!ok)
+                 {
+                     piece.transform.DOScale(
+                         parent.rect.size / sprite.rect.size *
+                         controller.canvas.GetComponent<RectTransform>().localScale *
+                         sprite.pixelsPerUnit, 0.2f);
+                     ok = true;
+                 }
                  
-                 // Vector3 localPos = controller.parentElement.InverseTransformPoint(wordPos);
-                 // rect.localPosition = localPos;
                  controller.canDrag = true;
                  isDragging = true;
                  isOut = false;
@@ -213,8 +223,8 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
          clonePiece = Instantiate(this.gameObject, this.gameObject.transform.position, Quaternion.identity, controller.parentElement);
          clonePiece.transform.SetSiblingIndex(order);
          clonePiece.GetComponent<Image>().color = new Color(0, 0, 0, 0);
-         clonePiece.transform.DOScaleX(0, 0.2f).SetEase(Ease.InOutCubic);
-         yield return new WaitForSeconds(0.2f);
+         clonePiece.GetComponent<RectTransform>().DOSizeDelta(new Vector2(-controller.HLG.spacing, clonePiece.GetComponent<RectTransform>().sizeDelta.y), .3f);
+         yield return new WaitForSeconds(.3f);
          Destroy(clonePiece);
          clonePiece.transform.DOKill(true);
      }
@@ -226,14 +236,14 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
              PuzzleController.Instance.pieces[id].transform.GetChild(0).gameObject.SetActive(false);
          
          clonePiece = Instantiate(this.gameObject, this.gameObject.transform.position, Quaternion.identity, controller.parentElement);
-         clonePiece.GetComponent<RectTransform>().localScale = new Vector3(0, 1, 1);
+         clonePiece.GetComponent<RectTransform>().sizeDelta = new Vector2(-controller.HLG.spacing,
+             clonePiece.GetComponent<RectTransform>().sizeDelta.y);
          Destroy(clonePiece.GetComponent<PieceScroll>());
          clonePiece.transform.SetSiblingIndex(order);
          if(clonePiece.GetComponent<Image>().enabled == false)
              clonePiece.GetComponent<Image>().enabled = true;
          clonePiece.GetComponent<Image>().color = new Color(0, 0, 0, 0);
-         clonePiece.transform.DOScaleX(1, .3f).SetEase(Ease.InOutCubic);
-         Vector3 tempPos = clonePiece.transform.TransformPoint(Vector3.zero);
+         
          // Instantiate(GameController.Instance.dot2, clonePiece.GetComponent<RectTransform>().position, Quaternion.identity, controller.parentDrag);
 
          yield return new WaitForSeconds(0.00001f);
@@ -241,10 +251,12 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
          // Debug.Log("Piece localPos: " + transform.position + " ClonePiece Pos: " + clonePiece.transform.position);
          PuzzleController.Instance.pieces[id].transform.DOMove(clonePiece.transform.position, .3f).SetEase(Ease.InOutCubic);
          
+         clonePiece.GetComponent<RectTransform>().DOSizeDelta(rect.sizeDelta, .3f).SetEase(Ease.InOutCubic);
+         
          yield return new WaitForSeconds(.3f);
          
+         // clonePiece.transform.DOKill(true);
          Destroy(clonePiece);
-         clonePiece.transform.DOKill(true);
          
          Debug.Log(order);
          transform.SetParent(controller.parentElement);
@@ -258,7 +270,7 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
      
      IEnumerator AdjustScroll()
      {
-        yield return new WaitForSeconds(0.01f);
+        yield return new WaitForSeconds(0.001f);
          controller.contentSizeFitter.enabled = true;
      }
 
@@ -294,10 +306,53 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
      
     public void OnPointerDown(PointerEventData eventData)
     {
-            Debug.Log("Update PieceScroll " + order);
-            rect = GetComponent<RectTransform>();
+            
             controller.currentClickScroll = this;
     }
 
+    void UpdateScale(float pixelHeightOnCanvas)
+    {
+        SpriteRenderer _sprite = PuzzleController.Instance.pieces[id].transform.GetComponent<SpriteRenderer>();
+        CanvasScaler matchCanvas = GetComponentInParent<CanvasScaler>();
+        // The canvas will try to scale its reference resolution
+        // to match the screen's dimensions in either x or y.
+        // (Assuming it's in Overlay mode or using a fullscreen camera
+        // - if rendering to a smaller rect, use that pixel rect instead)
+        Vector2 scaleFactorRange = new Vector2(
+            Screen.width / matchCanvas.referenceResolution.x,
+            Screen.height / matchCanvas.referenceResolution.y);
+
+        // When the screen's aspect ratio isn't the same as the reference,
+        // the canvas picks between two scale factors with matchWidthOrHeight
+        float scaleFactor = Mathf.Lerp(
+            scaleFactorRange.x,
+            scaleFactorRange.y,
+            matchCanvas.matchWidthOrHeight);
+
+        // We can now compute how much it will scale our in-canvas
+        // dimensions to produce on-screen pixel dimensions.
+        float heightInScreenPixels = pixelHeightOnCanvas * scaleFactor;
+
+        // For the next part, we need to know what camera we're
+        // being rendered by - consider caching this if it's constant.
+        Camera cam = Camera.main;
+
+        // We'll convert the screen height into a fraction of the camera's
+        // vertical span (which might be less than the screen's if rendering
+        // to a smaller viewport rect).
+        float heightAsViewFraction = heightInScreenPixels / cam.pixelRect.height;
+
+        // Now we can convert that to a desired world height by multiplying
+        // by the camera's vertical size - note that orthographicSize is
+        // only half the height of the camera's view, hence the 2x.    
+        float heightInWorldUnits = 2f * cam.orthographicSize * heightAsViewFraction;
+
+        // Lastly, we need to know how big "this" sprite is at scale = 1.
+        float nativeWorldHeight = _sprite.sprite.rect.height / _sprite.sprite.pixelsPerUnit;
+
+        // And our scale factor is the multiplier that gets us from our
+        // native world size to the desired world size.
+        PuzzleController.Instance.pieces[id].transform.localScale = Vector3.one * heightInWorldUnits / nativeWorldHeight;
+    }
     
 }

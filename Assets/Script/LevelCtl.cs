@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.UI;
 
 public class LevelCtl : MonoBehaviour
@@ -42,6 +43,11 @@ public class LevelCtl : MonoBehaviour
          if(puzzles[index] == null)
              Debug.Log("Puzzle null");
          Instantiate(puzzles[index], new Vector3(0, 0, 0), Quaternion.identity);
+         
+         for(int i =0; i < puzzles[index].transform.childCount; i++)
+         {
+             puzzles[index].transform.GetChild(i).GetComponent<SpriteRenderer>().sortingOrder = 1;
+         }
          
          puzzles[index].Prepare();
          puzzles[index].SetAnchor(PuzzleAnchor.Center);
@@ -138,6 +144,7 @@ public class LevelCtl : MonoBehaviour
                  yCor = -(maxHeight - piece[i].GetComponent<RectTransform>().rect.height)/2;
              else
                  yCor = 0;
+             PiecePre.state = piece[i].state;
              PiecePre.startPos = new Vector3(0, yCor, 0);
              PiecePre.GetComponent<RectTransform>().localPosition = new Vector3(0,yCor, 0);
          }

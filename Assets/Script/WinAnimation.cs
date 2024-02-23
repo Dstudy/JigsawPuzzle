@@ -25,6 +25,8 @@ public class WinAnimation : MonoBehaviour
     public Text timeText;
     public Text pieceNum;
 
+    public GameObject BgFrame;
+
     private Vector3 orgiginalPos;
     
     private void Awake()
@@ -39,6 +41,8 @@ public class WinAnimation : MonoBehaviour
 
     IEnumerator WinAnim()
     {
+        BgFrame.SetActive(false);
+        PuzzleController.Instance.gameObject.SetActive(false);
         if(!winConfetti.gameObject.activeInHierarchy)
             winConfetti.gameObject.SetActive(true);
         winConfetti.Play();

@@ -116,8 +116,8 @@ ParticleSystem:
     startLifetime:
       serializedVersion: 2
       minMaxState: 3
-      scalar: 0.5
-      minScalar: 1
+      scalar: 0.75
+      minScalar: 0.5
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -168,9 +168,9 @@ ParticleSystem:
         m_RotationOrder: 4
     startSpeed:
       serializedVersion: 2
-      minMaxState: 0
-      scalar: 20
-      minScalar: 5
+      minMaxState: 3
+      scalar: 45
+      minScalar: 30
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -983,22 +983,22 @@ ParticleSystem:
         serializedVersion: 2
         m_Curve:
         - serializedVersion: 3
-          time: 0.022224426
-          value: 0.11442566
-          inSlope: 2
-          outSlope: 2
+          time: 0.011806488
+          value: 0
+          inSlope: 2.2302814
+          outSlope: 2.2302814
           tangentMode: 0
           weightedMode: 0
           inWeight: 0
-          outWeight: 0
+          outWeight: 0.14438267
         - serializedVersion: 3
-          time: 0.7733222
-          value: 0.24379158
-          inSlope: 0
-          outSlope: 0
+          time: 0.68998885
+          value: 0.00055348873
+          inSlope: -1.857817
+          outSlope: -1.857817
           tangentMode: 0
           weightedMode: 0
-          inWeight: 0
+          inWeight: 0.19876595
           outWeight: 0
         m_PreInfinity: 2
         m_PostInfinity: 1
@@ -2571,7 +2571,7 @@ ParticleSystem:
     magnitude:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 1.04
+      scalar: 1.1
       minScalar: 1
       maxCurve:
         serializedVersion: 2
@@ -2625,7 +2625,7 @@ ParticleSystem:
     inWorldSpace: 0
     multiplyDragByParticleSize: 1
     multiplyDragByParticleVelocity: 1
-    dampen: 0.3
+    dampen: 0.65
     drag:
       serializedVersion: 2
       minMaxState: 0
@@ -4781,7 +4781,7 @@ ParticleSystemRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 2
   m_RenderMode: 0
   m_MeshDistribution: 0
   m_SortMode: 0

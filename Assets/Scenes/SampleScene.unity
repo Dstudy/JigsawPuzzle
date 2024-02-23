@@ -186,7 +186,7 @@ BoxCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 32204796}
   m_Material: {fileID: 0}
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
   m_Size: {x: 27.594368, y: 30.877306, z: 0.9999994}
@@ -452,7 +452,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 419}
+  m_AnchoredPosition: {x: 0, y: 419.00006}
   m_SizeDelta: {x: 617.75, y: 115.83}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!102 &251295720
@@ -586,11 +586,11 @@ BoxCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 264143206}
   m_Material: {fileID: 0}
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 26.421328, y: 6.352898, z: 0.9999994}
-  m_Center: {x: 0.030888842, y: 3.2229545, z: 0}
+  m_Size: {x: 26.421328, y: 7.0447783, z: 0.99999946}
+  m_Center: {x: 0.030888679, y: 2.8770144, z: 0}
 --- !u!224 &264143208
 RectTransform:
   m_ObjectHideFlags: 0
@@ -747,7 +747,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: -2
   m_Sprite: {fileID: 7482667652216324306, guid: 48e93eef0688c4a259cb0eddcd8661f7, type: 3}
-  m_Color: {r: 0.6320754, g: 0.6320754, b: 0.6320754, a: 0.45490196}
+  m_Color: {r: 0.764151, g: 0.764151, b: 0.764151, a: 0.45490196}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -944,7 +944,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 420001747}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -12.28, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1204,6 +1204,7 @@ GameObject:
   - component: {fileID: 519420029}
   - component: {fileID: 519420033}
   - component: {fileID: 519420034}
+  - component: {fileID: 519420035}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1306,7 +1307,7 @@ MonoBehaviour:
   elapsedTimeUI: {fileID: 0}
   musicToggleUI: {fileID: 0}
   soundToggleUI: {fileID: 0}
-  musicPlayer: {fileID: 0}
+  musicPlayer: {fileID: 519420035}
   musicMain: {fileID: 8300000, guid: 62fe5415fec2e4743b4203a6212ffba9, type: 3}
   musicWin: {fileID: 0}
   musicLose: {fileID: 0}
@@ -1338,6 +1339,102 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_PlayOnAwake: 1
   m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!82 &519420035
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 0
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -1531,6 +1628,7 @@ GameObject:
   - component: {fileID: 620890217}
   - component: {fileID: 620890220}
   - component: {fileID: 620890221}
+  - component: {fileID: 620890222}
   m_Layer: 5
   m_Name: Scroll View
   m_TagString: Untagged
@@ -1639,6 +1737,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b131ff8d5739b70429456095722a5d43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  canvas: {fileID: 1496431494}
   scroll: {fileID: 620890217}
   currentClickScroll: {fileID: 0}
   parentElement: {fileID: 181598157}
@@ -1667,6 +1766,17 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 774.6854, y: 119.970085, z: 1}
   m_Center: {x: 0, y: 0, z: 1}
+--- !u!210 &620890222
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 620890215}
+  m_Enabled: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
 --- !u!224 &640740452 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 3051707335894367815, guid: ccdf383334530e8458d038cdaab85fbc, type: 3}
@@ -2499,7 +2609,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 330}
+  m_AnchoredPosition: {x: 0, y: 330.00006}
   m_SizeDelta: {x: 616.68, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &1283689783
@@ -2730,6 +2840,7 @@ MonoBehaviour:
   botNav: {fileID: 1936716264}
   timeText: {fileID: 0}
   pieceNum: {fileID: 0}
+  BgFrame: {fileID: 409554840}
 --- !u!4 &1340778227
 Transform:
   m_ObjectHideFlags: 0

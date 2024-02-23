@@ -13,6 +13,7 @@ using UnityEditor;
 using UnityEngine.Serialization;
 using UnityEngine.UIElements;
 using UnityEngine.VFX;
+using Image = UnityEngine.UI.Image;
 
 //
 public class HScrollController : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler
@@ -26,6 +27,7 @@ public class HScrollController : MonoBehaviour, IDragHandler, IBeginDragHandler,
       canDrag: Kiểm tra xem có được phép kéo các mảnh tranh không 
       startPoint: Vị trí của chuột hoặc ngón tay trên màn hình khi bă đầu kéo mảnh tranh
      */
+     public Canvas canvas;
      public ScrollRect scroll;
      public PieceScroll currentClickScroll;
      public RectTransform parentElement;
@@ -55,6 +57,9 @@ public class HScrollController : MonoBehaviour, IDragHandler, IBeginDragHandler,
 
     private void Start()
     {
+        Vector3 bottomLeft = Camera.main.ViewportToWorldPoint(Vector3.zero);
+        
+        // Debug.Log(bottomLeft.y + " "  + transform.position.y + " " + GetComponent<Image>().sprite.bounds.extents.y + " res:" + (transform.position.y + GetComponent<Image>().sprite.bounds.extents.y*2));
         
         StartCoroutine(LateStart(0.1f));
         InitPiece();

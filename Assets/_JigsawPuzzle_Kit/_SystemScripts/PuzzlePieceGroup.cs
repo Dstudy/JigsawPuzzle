@@ -12,6 +12,8 @@ public class PuzzlePieceGroup : MonoBehaviour
 	public List<PuzzlePiece> puzzlePieces; // List of pieces in the group
 	public Transform thisTransform;
 
+	public Bounds bounds;
+
 
 	//---------------------------------------------------------------------------------------------------------------------------------------------------
 	// Init
@@ -154,7 +156,7 @@ public class PuzzlePieceGroup : MonoBehaviour
 		// Check is rotation in allowed limits
 		if ((diff - rotatedStartDiff).magnitude > _puzzleController.groupingDistance) 
 		{
-			Debug.Log(rotatedStartDiff);
+			// Debug.Log(rotatedStartDiff);
 			pieceOrGroup1Transform.localRotation = originalRotation;
 			return false;
 		}
@@ -197,8 +199,9 @@ public class PuzzlePieceGroup : MonoBehaviour
 
 	//---------------------------------------------------------------------------------------------------------------------------------------------------
 	// Recalculate group center and pieces transform inside
-	public void RecalculateCenterAndTransformGroup() 
+	public void RecalculateCenterAndTransformGroup()
 	{
+		float min=1000f;
 		Vector3 center = Vector3.zero;
 		foreach (PuzzlePiece puzzlePiece in puzzlePieces) 
 		{
@@ -207,20 +210,37 @@ public class PuzzlePieceGroup : MonoBehaviour
 		}			
 		thisTransform.position = center / puzzlePieces.Count;
 		PuzzleController.Instance.groupCenter = center / puzzlePieces.Count;
-		Debug.Log("Center of Group" + center/ puzzlePieces.Count);
+		// Debug.Log("Center of Group" + center/ puzzlePieces.Count);
 		//
 		foreach (PuzzlePiece puzzlePiece in puzzlePieces) 
 		{
 			puzzlePiece.transform.parent = thisTransform;
 			puzzlePiece.transform.localRotation = Quaternion.identity;
-			Debug.Log(puzzlePiece.transform.gameObject.name + " " + puzzlePiece.transform.localPosition);
+			// Debug.Log(puzzlePiece.transform.gameObject.name + " " + puzzlePiece.transform.localPosition);
 			puzzlePiece.transform.localPosition = new Vector3(puzzlePiece.transform.localPosition.x, puzzlePiece.transform.localPosition.y, -0.0001f);
 			puzzlePiece.renderer.sortingOrder = -1;
-		}
+			if(puzzlePiece.transform.childCount > 0)
+				puzzlePiece.transform.GetChild(0).GetComponent<SpriteRenderer>().sortingOrder = -2;
 			
+		}
+		
+		bounds = new Bounds (transform.position, Vector3.one);
+		Renderer[] renderers = GetComponentsInChildren<Renderer>();
+			foreach (Renderer renderer in renderers)
+		{
+			bounds.Encapsulate (renderer.bounds);
+		}
+
 	}
 	
-	
+	public void ShowShadow(bool _show)
+	{
+		foreach (PuzzlePiece puzzlePiece in puzzlePieces) 
+		{
+			if(puzzlePiece.transform.childCount > 0)
+				puzzlePiece.transform.GetChild(0).gameObject.SetActive(_show);
+		}
+	}
 
 	//---------------------------------------------------------------------------------------------------------------------------------------------------
 }

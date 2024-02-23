@@ -228,6 +228,19 @@ public class GameController : MonoBehaviour
 					break;
 
 				case PuzzleState.DragPiece:
+					Debug.Log("DragPiece");
+					if (puzzle.currentObject != null)
+					{
+						if (puzzle.currentGroup)
+						{
+							puzzle.currentGroup.ShowShadow(true);
+						}
+						else
+						{
+							if(puzzle.currentObject.transform.childCount>1)
+								puzzle.currentObject.transform.GetChild(0).gameObject.SetActive(true);
+						}
+					}
 					PlaySound(soundGrab);
 					break;
 
@@ -235,7 +248,21 @@ public class GameController : MonoBehaviour
 					PlaySound(soundAssemble);
 					break;
 
+				
 				case PuzzleState.DropPiece:
+					Debug.Log("DragPiece");
+					if (puzzle.currentObject != null)
+					{
+						if (puzzle.currentGroup)
+						{
+							puzzle.currentGroup.ShowShadow(false);
+						}
+						else
+						{
+							if(puzzle.currentObject.transform.childCount>1)
+								puzzle.currentObject.transform.GetChild(0).gameObject.SetActive(false);
+						}
+					}
 					PlaySound(soundDrop);
 					break;
 

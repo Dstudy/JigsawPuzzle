@@ -21,9 +21,17 @@ public class NavBarController : MonoBehaviour
     public SpriteRenderer backGround;
 
     public GameObject BGPanel;
-    
+
+    public static NavBarController Instance;
+
+    private void Awake()
+    {
+        Instance = this;
+    }
+
     private void Start()
     {
+        // Debug.Log(transform.position + " + " + GetComponent<Image>().sprite.bounds.size);
         GameObject foundObject = GameObject.FindGameObjectWithTag("Puzzle_Background");
         if (foundObject)
         {
@@ -47,10 +55,10 @@ public class NavBarController : MonoBehaviour
         showMusicBtn.onClick.AddListener( (() =>
         {
             // Debug.Log("CLickShowBtn");
-            isOn = GameController.Instance.soundPlayer.enabled;
+            isOn = GameController.Instance.musicPlayer.enabled;
             showMusic.SetActive(!isOn);
             hideMusic.SetActive(isOn);
-            GameController.Instance.soundPlayer.enabled = !isOn;
+            GameController.Instance.musicPlayer.enabled = !isOn;
         }));
         
         changeBgBtn.onClick.AddListener((() =>

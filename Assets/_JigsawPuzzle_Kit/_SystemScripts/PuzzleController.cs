@@ -108,6 +108,11 @@ public class PuzzleController : MonoBehaviour
     float timeToRotate;
     float grabTime;
 
+    private Vector3 extents;
+    private Vector3 topRight ;
+    private Vector3 bottomLeft ;
+    private bool ok = false;
+
     private float dis;
 
     private BoxCollider scrollArea;
@@ -132,6 +137,10 @@ public class PuzzleController : MonoBehaviour
 				if(particle[0] != null)
 					Destroy(particle[0].gameObject);
 	    }
+
+	    topRight = Camera.main.ViewportToWorldPoint(Vector3.one);
+	    topRight.y -= NavBarController.Instance.GetComponent<Image>().sprite.bounds.size.y;
+	    bottomLeft = Camera.main.ViewportToWorldPoint(Vector3.zero);
     }
 
 
@@ -238,6 +247,13 @@ public class PuzzleController : MonoBehaviour
 	            if (!changeOnlyRotation && !swapPuzzleMode)
 		            currentObjectTransform.position = new Vector3(_pointerPosition.x - pieceCenterOffset.x, _pointerPosition.y - pieceCenterOffset.y, currentObjectTransform.position.z - dragOffsetZ);
 
+	            //Add drag extent
+	            if(!currentGroup)
+					extents = currentObjectTransform.GetComponent<SpriteRenderer>().sprite.bounds.extents * 2;
+	            else
+	            {
+		            extents = currentGroup.bounds.extents;
+	            }
 	            
                 state = PuzzleState.DragPiece;
                 grabTime = Time.time;
@@ -260,13 +276,37 @@ public class PuzzleController : MonoBehaviour
 	        // _pointerPosition.y += pieces[currentPiece].renderer.bounds.size.y * 0.5f;
 	        _pointerPosition.y += Mathf.Abs(dis);
         }
+
+        if (!ok)
+        {
+	        topRight = Camera.main.ViewportToWorldPoint(Vector3.one);
+	        topRight.y -= NavBarController.Instance.GetComponent<Image>().sprite.bounds.size.y;
+	        bottomLeft = Camera.main.ViewportToWorldPoint(Vector3.zero);
+        }
         
             // Set currentObject center position  to pointerPosition
             if (!changeOnlyRotation && !swapPuzzleMode/*&& (currentGroup == null || (currentGroup != null && _pointerPosition.y > scrollArea.GetComponent<RectTransform>().anchoredPosition.y + scrollArea.size.y/2 + pieceCenterOffset.y)) */)
             {
-	            currentObjectTransform.position = new Vector3(_pointerPosition.x - pieceCenterOffset.x,
+	            
+	            Vector3 pos = new Vector3(_pointerPosition.x - pieceCenterOffset.x,
 		            _pointerPosition.y, currentObjectTransform.position.z);
-		           // currentObjectTransform.position = new Vector3(_pointerPosition.x, _pointerPosition.y, currentObjectTransform.position.z);
+	            
+	            // Debug.Log("topRight: " + topRight + " bottomLeft: " + bottomLeft);
+	            // Debug.Log(currentObject.name);
+	            if (currentGroup!= null)
+	            {
+		            float temp = GameController.Instance.controller.scroll.transform.position.y + GameController.Instance.controller.scroll.GetComponent<Image>().sprite.bounds.size.y;
+		            pos.x = Mathf.Clamp(pos.x, bottomLeft.x + extents.x, topRight.x - extents.x);
+		            pos.y = Mathf.Clamp(pos.y, temp + extents.y, topRight.y - extents.y);
+	            }
+	            else if (currentObject!=null)
+	            {
+		            pos.x = Mathf.Clamp(pos.x, bottomLeft.x, topRight.x - extents.x);
+		            pos.y = Mathf.Clamp(pos.y, bottomLeft.y , topRight.y );
+	            }
+	            
+	            // Debug.Log("BottomLeft: " + bottomLeft + " TopRight: " + topRight + " Pos: " + pos + " Extents: " + extents + " Pointer: " + _pointerPosition + " PieceCenterOffset: " + pieceCenterOffset);
+	            currentObjectTransform.position = pos;
             }
            
             

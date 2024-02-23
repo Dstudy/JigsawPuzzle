@@ -36,7 +36,7 @@ public class PuzzleGenerator_Window : EditorWindow
     // Atlas and shadow settings
     static string texturePath = "Assets/_Atlas.png";
 	static bool useShadows;
-	static Vector3 shadowOffset = new Vector3(0.1f, -0.1f, 1);
+	static Vector3 shadowOffset = new Vector3(0.18f, -0.18f, 1);
 	static Color shadowColor = new Color(0, 0, 0, 0.5f);
 
 	// Important internal variables - please don't change them blindly
@@ -331,7 +331,7 @@ public class PuzzleGenerator_Window : EditorWindow
 
 					shadowRenderer = shadow.GetComponent<SpriteRenderer>();
 					shadowRenderer.color = shadowColor;
-					shadowRenderer.sortingOrder = 0;
+					shadowRenderer.sortingOrder = -1;
 					shadow.transform.localScale = Vector3.one;
 				}
 				
