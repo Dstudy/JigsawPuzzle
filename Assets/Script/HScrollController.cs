@@ -130,7 +130,18 @@ public class HScrollController : MonoBehaviour, IDragHandler, IBeginDragHandler,
              Debug.Log("AngleDrag: " + angleDrag);
              currentClickScroll.ActivePieceDrag();
              scroll.enabled = false;
+             ReArrange();
              // GamePlayController.Instance.blockRaycast.SetActive(true);
+         }
+     }
+
+
+     public void ReArrange()
+     {
+         for(int i = 0; i < parentElement.childCount; i++)
+         {
+             var child = parentElement.GetChild(i);
+             child.localPosition = new Vector3(child.localPosition.x, -26f, child.localPosition.z);
          }
      }
      
@@ -149,13 +160,7 @@ public class HScrollController : MonoBehaviour, IDragHandler, IBeginDragHandler,
              // Debug.Log(child.localPosition);
          }
          
-         // ScrollView scrollView = findViewById(R.id.scrollView);
-         // int targetY = 200; // The desired y coordinate for all the items
-         //
-         // for (int i = 0; i < scrollView.getChildCount(); i++) {
-         //     View child = scrollView.getChildAt(i);
-         //     child.setY(targetY);
-         // }
+         UpdatePos();
      }
      
      public void ArrangePos()
@@ -216,10 +221,12 @@ public class HScrollController : MonoBehaviour, IDragHandler, IBeginDragHandler,
          ArrangePos();
          tempObject.transform.DOScaleX(0, 0.1f);
          contentSizeFitter.enabled = false;
+         ReArrange();
          yield return new WaitForSeconds(0.1f);
          tempObject.GetComponent<RectTransform>().sizeDelta = new Vector2(0,0);
          Destroy(tempObject);
          contentSizeFitter.enabled = true;
+         ReArrange();
             GameController.Instance.blockRaycast.SetActive(false);
      }
 
@@ -273,7 +280,6 @@ public class HScrollController : MonoBehaviour, IDragHandler, IBeginDragHandler,
              Debug.Log("Realeasing...");
              if (outScroll)
              {
-                 
                  Debug.Log("Bay ra ngoai");
                  SlotOut();
                  outScroll = true;
@@ -284,6 +290,14 @@ public class HScrollController : MonoBehaviour, IDragHandler, IBeginDragHandler,
              {
                  currentClickScroll = null;
              }
+         }
+     }
+
+     public void UpdatePos()
+     {
+         for(int i  = 0; i < parentElement.childCount; i++)
+         {
+             parentElement.GetChild(i).transform.localPosition = new Vector3(parentElement.GetChild(i).transform.localPosition.x, 0, 0);
          }
      }
 

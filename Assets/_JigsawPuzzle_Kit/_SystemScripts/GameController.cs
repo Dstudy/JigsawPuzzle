@@ -228,7 +228,7 @@ public class GameController : MonoBehaviour
 					break;
 
 				case PuzzleState.DragPiece:
-					Debug.Log("DragPiece");
+					// Debug.Log("DragPiece");
 					if (puzzle.currentObject != null)
 					{
 						if (puzzle.currentGroup)

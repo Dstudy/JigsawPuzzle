@@ -13,6 +13,8 @@ using UnityEngine.Serialization;
 // using UnityEngine.Assertions.Must;
 // using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Debug = UnityEngine.Debug;
+
 //
 public class PieceScroll : MonoBehaviour, IPointerDownHandler
 {
@@ -74,6 +76,7 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
              clonePiece = Instantiate(this.gameObject, this.gameObject.transform.position, Quaternion.identity, controller.parentElement);
              clonePiece.transform.SetSiblingIndex(order);
              clonePiece.GetComponent<Image>().enabled = false;
+             Debug.Log("Gen ClonePiece");
              startPos = rect.position;
 
              // Set lại parent cho mảnh tranh, cập nhật mảnh tranh có thể được kéo và đang được kéo 
@@ -121,6 +124,7 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
                 ReturnPiece();
          }
          controller.contentSizeFitter.enabled = true;
+         controller.scroll.enabled = true;
          fromScroll = true;
          
          if(PuzzleController.Instance.currentObject != null)
@@ -133,6 +137,10 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
 
      private void Update()
      {
+         if (!isDragging && gameObject.activeInHierarchy)
+         {
+             transform.localPosition = new Vector3(transform.localPosition.x, -26f, transform.localPosition.z);
+         }
          
          if (controller.canDrag && isDragging)
          {
@@ -149,8 +157,10 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
              
              if (controller.outScroll && !isOut)
              {
+                 controller.scroll.enabled = false;
                  controller.contentSizeFitter.enabled = false;
                  Debug.Log("OutToScroll");
+                 if(clonePiece != null)
                  if(clonePiece != null)
                     Destroy(clonePiece);
                  var dragPiece = PuzzleController.Instance.pieces[id];
@@ -270,8 +280,9 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
      
      IEnumerator AdjustScroll()
      {
-        yield return new WaitForSeconds(0.001f);
+        yield return new WaitForSeconds(2f);
          controller.contentSizeFitter.enabled = true;
+         controller.scroll.enabled  = true;
      }
 
      IEnumerator PieceToScroll(Vector3 scale)
