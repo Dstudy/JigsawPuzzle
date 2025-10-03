@@ -12,6 +12,7 @@ public class GenPuzzle: MonoBehaviour
 
     private void Awake()
     {
+        DontDestroyOnLoad(this);
         Instance = this;
         Debug.Log("The object is awake");
     }

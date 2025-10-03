@@ -3,11 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class NavBarController : MonoBehaviour
 {
+    public Button backButton;
     public Button showMusicBtn;
     public Button showBgBtn;
     public Button changeBgBtn;
@@ -89,6 +91,12 @@ public class NavBarController : MonoBehaviour
                 unSort.SetActive(true);
                 StartCoroutine(GameController.Instance.controller.Shuffle());
             }
+        }));
+        
+        backButton.onClick.AddListener((() =>
+        {
+            GameController.Instance.Save();
+            SceneManager.LoadScene("Menu");
         }));
     }
 

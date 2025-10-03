@@ -39,6 +39,18 @@ public class WinAnimation : MonoBehaviour
         StartCoroutine(WinAnim());
     }
 
+    public void ShowWinPanelOnly()
+    {
+        winPanel.SetActive(true);
+        winFrame.SetActive(true);
+        botNav.SetActive(true);
+        gameInfor.SetActive(true);
+        textContainer.SetActive(true);
+        spinObject.SetActive(true);
+        winFrame.transform.GetChild(0).GetComponent<SpriteRenderer>().sprite = GenPuzzle.Instance.levelImage[GameController.Instance.currentLevel];
+        ShowInfor();
+    }
+
     IEnumerator WinAnim()
     {
         BgFrame.SetActive(false);
@@ -51,15 +63,12 @@ public class WinAnimation : MonoBehaviour
         GameController.Instance.blockRaycast.SetActive(true);
         
         GameController.Instance.controller.gameObject.SetActive(false);
-
         
         yield return new WaitForSeconds(1f);
         
-        
         if(!winPanel.activeInHierarchy)
             winPanel.SetActive(true);
-        if(!textContainer.activeInHierarchy)
-            textContainer.SetActive(true);
+        
         orgiginalPos = textContainer.GetComponent<RectTransform>().position;
         textContainer.GetComponent<RectTransform>().position = Vector3.zero;
         
@@ -98,12 +107,22 @@ public class WinAnimation : MonoBehaviour
         
         yield return new WaitForSeconds(0.75f);
         
-        
-        gameInfor.SetActive(true);
+        ShowInfor();
         if(!spinObject.activeInHierarchy)
             spinObject.SetActive(true);
         spinObject.transform.DOLocalRotate(new Vector3(0,0,360), 100f, RotateMode.FastBeyond360).SetLoops(-1, LoopType.Incremental);
         GameController.Instance.blockRaycast.SetActive(false);
+    }
+
+    private void ShowInfor()
+    {
+        gameInfor.SetActive(true);
+        if(!textContainer.activeInHierarchy)
+            textContainer.SetActive(true);
+        if(timeText != null)
+            timeText.text = GameController.Instance.elapsedTime.ToString();
+        if(pieceNum != null)
+            pieceNum.text = GameController.Instance.puzzle.totalPieces.ToString();
     }
 
     IEnumerator TextAnim()

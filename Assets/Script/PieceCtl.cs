@@ -26,17 +26,4 @@ public class PieceCtl : MonoBehaviour
         this.id = id;
     }
     
-
-    private void AdjustElementPositions(int startIndex)
-    {
-        for (int i = startIndex; i < scrollRect.content.childCount; i++)
-        {
-            Transform child = scrollRect.content.GetChild(i);
-            if (child != null)
-            {
-                float newPosition = child.position.x + ownTransform.lossyScale.x;
-                child.position = new Vector3(newPosition, child.position.y, child.position.z);
-            }
-        }
-    }
 }

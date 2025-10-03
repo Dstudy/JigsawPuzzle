@@ -57,6 +57,7 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
      private void Start()
      {
          rect = GetComponent<RectTransform>();
+         
      }
 
      public void Init(HScrollController Controller)
@@ -74,9 +75,11 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
              Debug.Log("Active Piec Drag at " + order);
              
              clonePiece = Instantiate(this.gameObject, this.gameObject.transform.position, Quaternion.identity, controller.parentElement);
+             var ps = clonePiece.GetComponent<PieceScroll>();
+             if (ps) Destroy(ps);
              clonePiece.transform.SetSiblingIndex(order);
              clonePiece.GetComponent<Image>().enabled = false;
-             Debug.Log("Gen ClonePiece");
+             Debug.Log("Gen ClonePiece " + gameObject.name);
              startPos = rect.position;
 
              // Set lại parent cho mảnh tranh, cập nhật mảnh tranh có thể được kéo và đang được kéo 
@@ -101,7 +104,7 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
             Destroy(clonePiece);
          
          Vector2 screenPoint = Input.mousePosition ;
-         RectTransformUtility.ScreenPointToLocalPointInRectangle(rect, screenPoint, controller.camera, out var localPosition);
+         RectTransformUtility.ScreenPointToLocalPointInRectangle(rect, screenPoint, controller.uiCamera, out var localPosition);
          var wordPos = Camera.main.ScreenToWorldPoint(screenPoint);
          wordPos.y += PuzzleController.Instance.pieces[0].renderer.bounds.size.y*0.5f;
          wordPos.z = controller.zCor;
@@ -132,21 +135,20 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
              // PuzzleController.Instance.currentObject.transform.position = new Vector3(100, 100, 0);
              // PuzzleController.Instance.currentObject = null;
          }
-         
      }
 
      private void Update()
      {
-         if (!isDragging && gameObject.activeInHierarchy)
-         {
-             transform.localPosition = new Vector3(transform.localPosition.x, -26f, transform.localPosition.z);
-         }
+         // if (!isDragging && gameObject.activeInHierarchy)
+         // {
+         //     transform.localPosition = new Vector3(transform.localPosition.x, -26f, transform.localPosition.z);
+         // }
          
          if (controller.canDrag && isDragging)
          {
              // var wordPos = GetMousePos(tempPos);
              Vector2 screenPoint = Input.mousePosition ;
-             RectTransformUtility.ScreenPointToLocalPointInRectangle(rect, screenPoint, controller.camera, out var localPosition);
+             RectTransformUtility.ScreenPointToLocalPointInRectangle(rect, screenPoint, controller.uiCamera, out var localPosition);
              var wordPos = Camera.main.ScreenToWorldPoint(screenPoint);
              wordPos.x -= PuzzleController.Instance.pieces[0].renderer.bounds.size.x*(LevelCtl.currentSize/15f);
              wordPos.y += PuzzleController.Instance.pieces[0].renderer.bounds.size.y * (LevelCtl.currentSize/12f);
@@ -160,9 +162,6 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
                  controller.scroll.enabled = false;
                  controller.contentSizeFitter.enabled = false;
                  Debug.Log("OutToScroll");
-                 if(clonePiece != null)
-                 if(clonePiece != null)
-                    Destroy(clonePiece);
                  var dragPiece = PuzzleController.Instance.pieces[id];
                  
                  if(firstTime)
@@ -179,10 +178,13 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
                  isDragging = false;
                  transform.SetParent(controller.parentDrag);
                  transform.GetComponent<Image>().enabled = false;
-                 if(fromScroll)
-                    StartCoroutine(PieceOutAnim());
+                 if (fromScroll)
+                 {
+                     Debug.Log("Out anim");
+                     StartCoroutine(PieceOutAnim());
+                 }
+
                  ok = false;
-                 // PuzzleController.Instance.currentPiece = id;
              }
          }
 
@@ -203,7 +205,6 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
              if(!controller.outScroll)
              {
                  fromScroll = false;
-
                  var scale = piece.transform.GetComponent<Renderer>().bounds.size;
                  StartCoroutine(
                      PieceToScroll(scale));
@@ -223,20 +224,24 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
                  controller.canDrag = true;
                  isDragging = true;
                  isOut = false;
-                 // puzzleCtl.currentPiece = -1;
              }
          }
      }
      
      IEnumerator PieceOutAnim()
      {
-         clonePiece = Instantiate(this.gameObject, this.gameObject.transform.position, Quaternion.identity, controller.parentElement);
+         if(clonePiece == null)
+            clonePiece = Instantiate(this.gameObject, this.gameObject.transform.position, Quaternion.identity, controller.parentElement);
          clonePiece.transform.SetSiblingIndex(order);
+         if(clonePiece.GetComponent<Image>() == null)
+             Debug.Log("ClonePiece Image null");
          clonePiece.GetComponent<Image>().color = new Color(0, 0, 0, 0);
-         clonePiece.GetComponent<RectTransform>().DOSizeDelta(new Vector2(-controller.HLG.spacing, clonePiece.GetComponent<RectTransform>().sizeDelta.y), .3f);
+         if(clonePiece.GetComponent<RectTransform>() == null)
+                Debug.Log("ClonePiece RectTransform null");
+         clonePiece.GetComponent<RectTransform>().DOSizeDelta(new Vector2(-controller.hlg.spacing, clonePiece.GetComponent<RectTransform>().sizeDelta.y), .3f);
          yield return new WaitForSeconds(.3f);
-         Destroy(clonePiece);
          clonePiece.transform.DOKill(true);
+         Destroy(clonePiece);
      }
      
      IEnumerator PieceInAnim()
@@ -246,7 +251,7 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
              PuzzleController.Instance.pieces[id].transform.GetChild(0).gameObject.SetActive(false);
          
          clonePiece = Instantiate(this.gameObject, this.gameObject.transform.position, Quaternion.identity, controller.parentElement);
-         clonePiece.GetComponent<RectTransform>().sizeDelta = new Vector2(-controller.HLG.spacing,
+         clonePiece.GetComponent<RectTransform>().sizeDelta = new Vector2(-controller.hlg.spacing,
              clonePiece.GetComponent<RectTransform>().sizeDelta.y);
          Destroy(clonePiece.GetComponent<PieceScroll>());
          clonePiece.transform.SetSiblingIndex(order);
@@ -365,5 +370,7 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
         // native world size to the desired world size.
         PuzzleController.Instance.pieces[id].transform.localScale = Vector3.one * heightInWorldUnits / nativeWorldHeight;
     }
+    
+    
     
 }

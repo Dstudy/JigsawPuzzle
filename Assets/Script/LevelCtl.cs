@@ -9,8 +9,8 @@ using UnityEngine.UI;
 public class LevelCtl : MonoBehaviour
 {
 //     public List<List<PuzzlePiece>> listPieces = new List<List<PuzzlePiece>>();
-     public List<PuzzleController> puzzles;
-     public List<GameObject> level;
+     [NonSerialized]public List<PuzzleController> puzzles;
+     [NonSerialized]public List<GameObject> level;
      public GameObject background;
      public PieceScroll prefabPiece;
      public SlotCtl slotCtl;
@@ -21,7 +21,7 @@ public class LevelCtl : MonoBehaviour
      public Transform content;
      public Transform scrollView;
      public int pieceNum;
-     public List<int> size;
+     [NonSerialized]public List<int> size;
      public static int currentSize;
      public float shrink;
 
@@ -33,25 +33,30 @@ public class LevelCtl : MonoBehaviour
      {
          if(Instance == null)
              Instance = this;
+         
+         level = LevelData.Instance.level;
+         puzzles = LevelData.Instance.puzzles;
+         size = LevelData.Instance.size;
      }
 
      public void InitLevel(int index)
      {
-//         print("HelloWorld!");
         currentSize = size[index];
          Debug.Log("Level Index: " + index);
+         PuzzleController currentPuzzle = null;
          if(puzzles[index] == null)
              Debug.Log("Puzzle null");
-         Instantiate(puzzles[index], new Vector3(0, 0, 0), Quaternion.identity);
+         currentPuzzle = Instantiate(puzzles[index], new Vector3(0, 0, 0), Quaternion.identity);
+         currentPuzzle.name = puzzles[index].name;
          
-         for(int i =0; i < puzzles[index].transform.childCount; i++)
+         for(int i =0; i < currentPuzzle.transform.childCount; i++)
          {
-             puzzles[index].transform.GetChild(i).GetComponent<SpriteRenderer>().sortingOrder = 1;
+             currentPuzzle.transform.GetChild(i).GetComponent<SpriteRenderer>().sortingOrder = 1;
          }
          
-         puzzles[index].Prepare();
-         puzzles[index].SetAnchor(PuzzleAnchor.Center);
-         puzzles[index].Prepare();
+         // puzzles[index].Prepare();
+         currentPuzzle.SetAnchor(PuzzleAnchor.Center);
+         currentPuzzle.Prepare();
          
          
          if (index >= level.Count)
@@ -67,30 +72,6 @@ public class LevelCtl : MonoBehaviour
           backGround.GetComponent<SpriteRenderer>().material.color = new Color(1, 1, 1, 1);
           backGround.GetComponent<SpriteRenderer>().sprite = GenPuzzle.Instance.levelImage[index];
           
-          // Image imageComponent = backGround.GetComponent<Image>();
-          // if (imageComponent == null)
-          // {
-          //     imageComponent = backGround.AddComponent<Image>();
-          // }
-          //
-          // Material imageMaterial = imageComponent.material;
-          // if (imageMaterial == null)
-          // {
-          //     // imageMaterial = new Material(Shader.Find("Sprites/Default"));
-          //     imageComponent.material = imageMaterial;
-          // }
-          //
-          // if(GenPuzzle.Instance == null)
-          //     Debug.Log("Level Image null");
-          // if (GenPuzzle.Instance != null && GenPuzzle.Instance.levelImage.Count > index && GenPuzzle.Instance.levelImage[index] != null)
-          // {
-          //     imageMaterial.SetTexture("_MainTex", GenPuzzle.Instance.levelImage[index]);
-          // }
-          // else
-          // {
-          //     Debug.Log("Failed to set texture on the background.");
-          // }
-          
          slotCtl = curlevel.GetComponent<SlotCtl>();
          slotCtl.slots.Clear();
 
@@ -100,7 +81,16 @@ public class LevelCtl : MonoBehaviour
          pieceNum = level[index].transform.childCount;
 
          shrink = size[index] * 0.044f;
+        
+         currentPuzzle.LoadProgress(currentPuzzle.name);
+         int countAssembled = 0;
 
+         foreach (var piece in currentPuzzle.pieceAssembledIds)
+         {
+             Debug.Log(piece + " ");
+         }
+         
+         
          for (int i = 0; i < pieceNum; i++)
          {
              slots.Add(level[index].transform.GetChild(i).gameObject.GetComponent<PieceScroll>());
@@ -110,11 +100,9 @@ public class LevelCtl : MonoBehaviour
              if((sizeNew*shrink).y < minHeight)
                  minHeight = (sizeNew*shrink).y;
          }
-         
 
          for (int i = 0; i < pieceNum; i++)
          {
-             
              var piece = SlotCtl.Instance.slots;
              var PiecePre = Instantiate(prefabPiece, Vector3.zero, Quaternion.identity, content);
              PiecePre.id = i;
@@ -148,13 +136,19 @@ public class LevelCtl : MonoBehaviour
              PiecePre.startPos = new Vector3(0, yCor, 0);
              PiecePre.GetComponent<RectTransform>().localPosition = new Vector3(0,yCor, 0);
          }
-         
 
          for (int i = 0; i < curlevel.transform.childCount; i++)
          {
              Destroy(curlevel.transform.GetChild(i).gameObject);
          }
-       
+
+         foreach (var pieceID in currentPuzzle.pieceAssembledIds)
+         {
+             // if(piece >= 0 && piece < SlotCtl.Instance.slots.Count)
+             // {
+             GameController.Instance.controller.RemovePiece(pieceID);
+             // }
+         }
      }
 //     
 //     

@@ -140,7 +140,7 @@ public class PuzzleGenerator_Window : EditorWindow
 						}
 						catch(System.Exception ex)
 							{
-								EditorUtility.DisplayDialog("ERROR", "SOMETHING GONE WRONG! \n \n" + ex.Message, "OK");
+								EditorUtility.DisplayDialog("ERROR", "SOMETHING GONE WRONG with sub element! \n \n" + ex.Message, "OK");
 								subElement = null;
 							}
 
@@ -264,6 +264,7 @@ public class PuzzleGenerator_Window : EditorWindow
 				if (generateBackground)
 				{
 					puzzle.GenerateBackground(image, i, _centerAnchoring: (anchoring == PuzzleAnchor.Center), _adjustToPuzzle: true);
+					Debug.Log("Background generated");
 				}
 
 			}

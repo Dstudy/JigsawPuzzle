@@ -60,11 +60,12 @@ public class GameController : MonoBehaviour
 	public bool invertRules = false;	// Allows to invert basic rules - i.e. player should decompose  the images
 		
 	public int currentLevel = 0;		// Current level
+	public bool hasDonePrev = false;
 
 	// Important internal variables - please don't change them blindly
 	CameraController cameraScript;
 	float timerTime = 20.0f;
-	float remainingTime, elapsedTime;
+	public float remainingTime, elapsedTime;
 	[SerializeField] bool gameFinished = false;
     int remainingHints;
 	Color backgroundColor;
@@ -79,8 +80,6 @@ public class GameController : MonoBehaviour
 	public GameObject blockRaycast;
 
 	public ParticleSystem pieceIn;
-	// public ParticleSystem winPuzzleAnim;
-	// public ParticleSystem winConfetti;
 
 	private bool ok = false;
 
@@ -301,29 +300,6 @@ public class GameController : MonoBehaviour
 	{
 		// StartCoroutine(WinAnim());
 	}
-
-	// IEnumerator WinAnim()
-	// {
-		// if(!winPuzzleAnim.gameObject.activeInHierarchy)
-		// 	winPuzzleAnim.gameObject.SetActive(true);
-		// PlayMusic(musicWin, false);
-		// Instance.blockRaycast.SetActive(true);
-		// winPuzzleAnim.Play();
-		// controller.gameObject.SetActive(false);
-		// yield return new WaitForSeconds(3f);
-		// if (winUI)
-		// 	winUI.SetActive(true);
-		// if(winFrame)
-		// 	winFrame.SetActive(true);
-		// winFrame.GetComponent<Animator>().Play("FrameWin");
-		// winFrame.transform.GetChild(0).GetComponent<SpriteRenderer>().sprite = GenPuzzle.Instance.levelImage[currentLevel];
-		// if(!winConfetti.gameObject.activeInHierarchy)
-		// 	winConfetti.gameObject.SetActive(true);
-		// winConfetti.Play();
-		// blockRaycast.SetActive(false);
-		// SlotCtl.Instance.gameObject.SetActive(true);
-		// gameFinished = true;
-	// }
 	
 	public void NextLevel()
 	{
@@ -447,15 +423,16 @@ public class GameController : MonoBehaviour
 			puzzle.gameObject.SetActive(false);
 
         puzzle = _puzzle;
-		puzzle.gameObject.SetActive(true); 
+		puzzle.gameObject.SetActive(true);
 
 
-		if (!PlayerPrefs.HasKey (puzzle.name + "_Positions")  ||  !puzzle.enablePositionSaving)
-			if (!invertRules) 
-				puzzle.DecomposePuzzle (); 
+		if (!PlayerPrefs.HasKey(puzzle.name + "_Positions") || !puzzle.enablePositionSaving)
+		{
+			if (!invertRules)
+				puzzle.DecomposePuzzle();
 			else
-				puzzle.NonrandomPuzzle ();
-
+				puzzle.NonrandomPuzzle();
+		}
 
 		puzzle.invertedRules = invertRules;
 
@@ -851,7 +828,9 @@ public class GameController : MonoBehaviour
 		if (!puzzle)
 			return;
 		else
-			puzzle.LoadProgress(puzzle.name); 
+		{
+			puzzle.LoadProgress(puzzle.name);
+		}
 
 
 		if (PlayerPrefs.HasKey (puzzle.name + "_hints"))
@@ -879,7 +858,6 @@ public class GameController : MonoBehaviour
 
 		if (PlayerPrefs.HasKey(puzzle.name + "_elapsedTime"))
 			elapsedTime = PlayerPrefs.GetFloat(puzzle.name + "_elapsedTime");
-
 	}  
 
 	//-----------------------------------------------------------------------------------------------------	

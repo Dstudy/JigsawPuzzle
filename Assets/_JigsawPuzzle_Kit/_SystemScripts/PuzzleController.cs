@@ -13,7 +13,7 @@ using Random = UnityEngine.Random;
 
 
 // List of basic puzzle state to process
-public enum PuzzleState {None, DragPiece, ReturnPiece, DropPiece, RotatePiece, PuzzleAssembled}
+public enum PuzzleState { None, DragPiece, ReturnPiece, DropPiece, RotatePiece, PuzzleAssembled }
 
 public enum PuzzleAnchor { TopLeft, Center };
 public enum ScreenAnchor { None, TopLeft, Center, BottomLeft };
@@ -40,16 +40,8 @@ public class PuzzleController : MonoBehaviour
     // Allow shifting(including at decomposition) pieces in all 3 dimensions, Require them to be strictly in 3D place for assembling
     public bool fullyIn3D = false;
 
-
-
     // Set where the puzzle object pivot(center) should be
     public PuzzleAnchor anchoring;
-
-    // Sides (around puzzle) where pieces should be moved during decomposition
-    public bool decomposeToLeft = true;
-    public bool decomposeToRight = true;
-    public bool decomposeToTop;
-    public bool decomposeToBottom;
 
     // Decomposition area size and offset
     public Vector3 horizontalAreasSize = new Vector3(5, 5, 5);
@@ -91,11 +83,14 @@ public class PuzzleController : MonoBehaviour
     public ScrollRect scrollRect;
 
 
-    public int remainingPieces { get {return movedPieces.Count; } }
+    public int remainingPieces { get { return movedPieces.Count; } }
+    public int totalPieces { get { return pieces.Length; } }
 
     public List<int> movedPieces = new List<int>();
     List<PuzzlePiece> overlappedPieces = new List<PuzzlePiece>();
     List<int> ungroupedPieces = new List<int>();
+    
+    public List<Vector2> piecePivots;
 
     public Vector3 pieceCenterOffset;
     Vector2 oldPointerPosition;
@@ -109,38 +104,39 @@ public class PuzzleController : MonoBehaviour
     float grabTime;
 
     private Vector3 extents;
-    private Vector3 topRight ;
-    private Vector3 bottomLeft ;
+    private Vector3 topRight;
+    private Vector3 bottomLeft;
     private bool ok = false;
 
     private float dis;
 
     private BoxCollider scrollArea;
+    public List<int> pieceAssembledIds = new List<int>();
     public static PuzzleController Instance;
 
     [SerializeField] private List<ParticleSystem> particle;
 
     private void Awake()
     {
-	    if(Instance == null)
-		    Instance = this;
+        if (Instance == null)
+            Instance = this;
     }
 
     private void Start()
     {
-	    scrollRect = GameController.Instance.controller.scroll;
-	    scrollArea = GameController.Instance.ScrollArea.GetComponent<BoxCollider>();
+        scrollRect = GameController.Instance.controller.scroll;
+        scrollArea = GameController.Instance.ScrollArea.GetComponent<BoxCollider>();
 
-	    if (particle != null)
-	    {
-		    if (particle.Count > 0)
-				if(particle[0] != null)
-					Destroy(particle[0].gameObject);
-	    }
+        if (particle != null)
+        {
+            if (particle.Count > 0)
+                if (particle[0] != null)
+                    Destroy(particle[0].gameObject);
+        }
 
-	    topRight = Camera.main.ViewportToWorldPoint(Vector3.one);
-	    topRight.y -= NavBarController.Instance.GetComponent<Image>().sprite.bounds.size.y;
-	    bottomLeft = Camera.main.ViewportToWorldPoint(Vector3.zero);
+        topRight = Camera.main.ViewportToWorldPoint(Vector3.one);
+        topRight.y -= NavBarController.Instance.GetComponent<Image>().sprite.bounds.size.y;
+        bottomLeft = Camera.main.ViewportToWorldPoint(Vector3.zero);
     }
 
 
@@ -163,7 +159,6 @@ public class PuzzleController : MonoBehaviour
         pieces = new PuzzlePiece[thisTransform.childCount - startChildOffset];
         for (int i = 0; i < pieces.Length; i++)
             pieces[i] = new PuzzlePiece(thisTransform.GetChild(i + startChildOffset), pieceMaterial_assembled);
-
 
         // Check if everyrhing allright
         if (pieces == null || pieces.Length < 0)
@@ -194,33 +189,33 @@ public class PuzzleController : MonoBehaviour
 
     //-----------------------------------------------------------------------------------------------------	
     // Process puzzle during gameplay (including user input)
-    public PuzzleState ProcessPuzzle (Vector3 _pointerPosition, bool _dragInput, float _rotationDirection)
+    public PuzzleState ProcessPuzzle(Vector3 _pointerPosition, bool _dragInput, float _rotationDirection)
     {
-        if (IsAssembled()) 
+        if (IsAssembled())
             return PuzzleState.PuzzleAssembled;
-        else 
+        else
             state = PuzzleState.None;
 
         //TODO: Move to an option
         _dragInput |= (_rotationDirection != 0);
-        
-        
+
+
         // Check is any piece clicked and get it Id 
-        if (_dragInput  &&  currentPiece < 0) 
+        if (_dragInput && currentPiece < 0)
         {
             if (Time.time < (grabTime + 0.05f)) return PuzzleState.None;
             _pointerPosition.z = 0;
             currentPiece = GetPointedPieceId(_pointerPosition, true);
 
-            if (currentPiece >= 0) 
+            if (currentPiece >= 0)
             {
-                if (enablePiecesGroups) 
+                if (enablePiecesGroups)
                 {
-                    currentObject = PuzzlePieceGroup.GetGroupObjectIfPossible (pieces [currentPiece].transform.gameObject);
+                    currentObject = PuzzlePieceGroup.GetGroupObjectIfPossible(pieces[currentPiece].transform.gameObject);
                     currentObjectTransform = currentObject.transform;
                     currentGroup = currentObject.GetComponent<PuzzlePieceGroup>();
-                } 
-                else 
+                }
+                else
                 {
                     currentObject = pieces[currentPiece].transform.gameObject;
                     currentObjectTransform = pieces[currentPiece].transform;
@@ -229,36 +224,36 @@ public class PuzzleController : MonoBehaviour
                 // Piece center position offset from pointer (don't work for groups)
                 if (currentGroup)
                 {
-	                currentGroup.GetComponent<PuzzlePieceGroup>().RecalculateCenterAndTransformGroup();
-	                pieceCenterOffset = new Vector2(_pointerPosition.x - groupCenter.x,
-		                _pointerPosition.y - groupCenter.y );
+                    currentGroup.GetComponent<PuzzlePieceGroup>().RecalculateCenterAndTransformGroup();
+                    pieceCenterOffset = new Vector2(_pointerPosition.x - groupCenter.x,
+                        _pointerPosition.y - groupCenter.y);
                 }
                 else
-					pieceCenterOffset = new Vector2(_pointerPosition.x - pieces[currentPiece].transform.position.x,
-		               _pointerPosition.y );
-                if(currentGroup == null)
-					dis = _pointerPosition.y - pieces[currentPiece].transform.position.y;
+                    pieceCenterOffset = new Vector2(_pointerPosition.x - pieces[currentPiece].transform.position.x,
+                       _pointerPosition.y);
+                if (currentGroup == null)
+                    dis = _pointerPosition.y - pieces[currentPiece].transform.position.y;
                 else
                 {
-	                dis = _pointerPosition.y - groupCenter.y;
+                    dis = _pointerPosition.y - groupCenter.y;
                 }
-                
-	            // Add Drag offset 
-	            if (!changeOnlyRotation && !swapPuzzleMode)
-		            currentObjectTransform.position = new Vector3(_pointerPosition.x - pieceCenterOffset.x, _pointerPosition.y - pieceCenterOffset.y, currentObjectTransform.position.z - dragOffsetZ);
 
-	            //Add drag extent
-	            if(!currentGroup)
-					extents = currentObjectTransform.GetComponent<SpriteRenderer>().sprite.bounds.extents * 2;
-	            else
-	            {
-		            extents = currentGroup.bounds.extents;
-	            }
-	            
+                // Add Drag offset 
+                if (!changeOnlyRotation && !swapPuzzleMode)
+                    currentObjectTransform.position = new Vector3(_pointerPosition.x - pieceCenterOffset.x, _pointerPosition.y - pieceCenterOffset.y, currentObjectTransform.position.z - dragOffsetZ);
+
+                //Add drag extent
+                if (!currentGroup)
+                    extents = currentObjectTransform.GetComponent<SpriteRenderer>().sprite.bounds.extents * 2;
+                else
+                {
+                    extents = currentGroup.bounds.extents;
+                }
+
                 state = PuzzleState.DragPiece;
                 grabTime = Time.time;
-                
-            } 
+
+            }
 
         }
 
@@ -269,169 +264,170 @@ public class PuzzleController : MonoBehaviour
         {
             return PuzzleState.None;
         }
-        
+
         // Pointer position offset for mobile or rotation for desktop
         if (Input.touchCount > 0)
         {
-	        // _pointerPosition.y += pieces[currentPiece].renderer.bounds.size.y * 0.5f;
-	        _pointerPosition.y += Mathf.Abs(dis);
+            // _pointerPosition.y += pieces[currentPiece].renderer.bounds.size.y * 0.5f;
+            _pointerPosition.y += Mathf.Abs(dis);
         }
 
         if (!ok)
         {
-	        topRight = Camera.main.ViewportToWorldPoint(Vector3.one);
-	        topRight.y -= NavBarController.Instance.GetComponent<Image>().sprite.bounds.size.y;
-	        bottomLeft = Camera.main.ViewportToWorldPoint(Vector3.zero);
+            topRight = Camera.main.ViewportToWorldPoint(Vector3.one);
+            topRight.y -= NavBarController.Instance.GetComponent<Image>().sprite.bounds.size.y;
+            bottomLeft = Camera.main.ViewportToWorldPoint(Vector3.zero);
         }
-        
-            // Set currentObject center position  to pointerPosition
-            if (!changeOnlyRotation && !swapPuzzleMode/*&& (currentGroup == null || (currentGroup != null && _pointerPosition.y > scrollArea.GetComponent<RectTransform>().anchoredPosition.y + scrollArea.size.y/2 + pieceCenterOffset.y)) */)
+
+        // Set currentObject center position  to pointerPosition
+        if (!changeOnlyRotation && !swapPuzzleMode/*&& (currentGroup == null || (currentGroup != null && _pointerPosition.y > scrollArea.GetComponent<RectTransform>().anchoredPosition.y + scrollArea.size.y/2 + pieceCenterOffset.y)) */)
+        {
+
+            Vector3 pos = new Vector3(_pointerPosition.x - pieceCenterOffset.x,
+                _pointerPosition.y, currentObjectTransform.position.z);
+
+            // Debug.Log("topRight: " + topRight + " bottomLeft: " + bottomLeft);
+            // Debug.Log(currentObject.name);
+            if (currentGroup != null)
             {
-	            
-	            Vector3 pos = new Vector3(_pointerPosition.x - pieceCenterOffset.x,
-		            _pointerPosition.y, currentObjectTransform.position.z);
-	            
-	            // Debug.Log("topRight: " + topRight + " bottomLeft: " + bottomLeft);
-	            // Debug.Log(currentObject.name);
-	            if (currentGroup!= null)
-	            {
-		            float temp = GameController.Instance.controller.scroll.transform.position.y + GameController.Instance.controller.scroll.GetComponent<Image>().sprite.bounds.size.y;
-		            pos.x = Mathf.Clamp(pos.x, bottomLeft.x + extents.x, topRight.x - extents.x);
-		            pos.y = Mathf.Clamp(pos.y, temp + extents.y, topRight.y - extents.y);
-	            }
-	            else if (currentObject!=null)
-	            {
-		            pos.x = Mathf.Clamp(pos.x, bottomLeft.x, topRight.x - extents.x);
-		            pos.y = Mathf.Clamp(pos.y, bottomLeft.y , topRight.y );
-	            }
-	            
-	            // Debug.Log("BottomLeft: " + bottomLeft + " TopRight: " + topRight + " Pos: " + pos + " Extents: " + extents + " Pointer: " + _pointerPosition + " PieceCenterOffset: " + pieceCenterOffset);
-	            currentObjectTransform.position = pos;
+                float temp = GameController.Instance.controller.scroll.transform.position.y + GameController.Instance.controller.scroll.GetComponent<Image>().sprite.bounds.size.y;
+                pos.x = Mathf.Clamp(pos.x, bottomLeft.x + extents.x, topRight.x - extents.x);
+                pos.y = Mathf.Clamp(pos.y, temp + extents.y, topRight.y - extents.y);
             }
-           
-            
+            else if (currentObject != null)
+            {
+                pos.x = Mathf.Clamp(pos.x, bottomLeft.x, topRight.x - extents.x);
+                pos.y = Mathf.Clamp(pos.y, bottomLeft.y, topRight.y);
+            }
+
+            // Debug.Log("BottomLeft: " + bottomLeft + " TopRight: " + topRight + " Pos: " + pos + " Extents: " + extents + " Pointer: " + _pointerPosition + " PieceCenterOffset: " + pieceCenterOffset);
+            currentObjectTransform.position = pos;
+        }
 
 
-            // Drop piece and assemble it to puzzle (if it close enough to it initial position/rotation)    
-            if (!_dragInput && currentPiece >= 0) 
-            {   
-                currentObjectTransform.localRotation = new Quaternion(0, 0, currentObjectTransform.localRotation.z, currentObjectTransform.localRotation.w); //Removes the tilt effect
-                if (!changeOnlyRotation && !swapPuzzleMode)
-                {
-	                currentObjectTransform.position = new Vector3(currentObjectTransform.position.x,
-		                currentObjectTransform.position.y, currentObjectTransform.position.z + dragOffsetZ);
-
-                }
-                // if (currentObject.transform.childCount > 0) 
-	               //  currentObject.transform.GetChild(0).gameObject.SetActive(false);
-                
-                // Process groups if needed
-                if (enablePiecesGroups && !swapPuzzleMode) 
-                {
-                    bool grouping = false;
-                    // Get list of all pieces overlapped by currentPiece
-                    foreach (int movedPieceId in movedPieces)
-                        if (movedPieceId != currentPiece)
-                            if (currentGroup != null) // if dropped a group
-                            {
-                                if (pieces [movedPieceId].transform.parent != currentGroup.transform)
-                                    foreach (PuzzlePiece groupPiece in currentGroup.puzzlePieces)
-                                        if (groupPiece.renderer.bounds.Intersects (pieces [movedPieceId].renderer.bounds))
-                                            overlappedPieces.Add (pieces [movedPieceId]);
-                            } 
-                            else  // if dropped a piece
-                                if (pieces [currentPiece].renderer.bounds.Intersects (pieces [movedPieceId].renderer.bounds))
-                                    overlappedPieces.Add (pieces [movedPieceId]);
-
-                    // Try to merge overlapped pieces to groups
-                    for (int i = 0; i < overlappedPieces.Count; i++) 
-                        grouping |= PuzzlePieceGroup.MergeGroupsOrPieces (pieces [currentPiece], overlappedPieces [i], this);
-                    overlappedPieces.Clear ();
-
-                    if (grouping) 
-                    {
-                        UpdateUngroupedPiecesList ();
-                        state = PuzzleState.DropPiece;
-                    }
 
 
-                    // Assemble grouped pieces to puzzle
-                    if (currentGroup != null)
-                    {
-                        if (IsPieceInPlace (currentGroup.puzzlePieces [0], allowedDistance, allowedRotation) || (invertedRules && !IsPieceInPlace (currentGroup.puzzlePieces [0], allowedDistance, allowedRotation))) 
+        // Drop piece and assemble it to puzzle (if it close enough to it initial position/rotation)    
+        if (!_dragInput && currentPiece >= 0)
+        {
+            Debug.Log(pieces[currentPiece].GetPievePivotOffset());
+            currentObjectTransform.localRotation = new Quaternion(0, 0, currentObjectTransform.localRotation.z, currentObjectTransform.localRotation.w); //Removes the tilt effect
+            if (!changeOnlyRotation && !swapPuzzleMode)
+            {
+                currentObjectTransform.position = new Vector3(currentObjectTransform.position.x,
+                    currentObjectTransform.position.y, currentObjectTransform.position.z + dragOffsetZ);
+
+            }
+            // if (currentObject.transform.childCount > 0) 
+            //  currentObject.transform.GetChild(0).gameObject.SetActive(false);
+
+            // Process groups if needed
+            if (enablePiecesGroups && !swapPuzzleMode)
+            {
+                bool grouping = false;
+                // Get list of all pieces overlapped by currentPiece
+                foreach (int movedPieceId in movedPieces)
+                    if (movedPieceId != currentPiece)
+                        if (currentGroup != null) // if dropped a group
                         {
-                            int groupPieceId; 
+                            if (pieces[movedPieceId].transform.parent != currentGroup.transform)
+                                foreach (PuzzlePiece groupPiece in currentGroup.puzzlePieces)
+                                    if (groupPiece.renderer.bounds.Intersects(pieces[movedPieceId].renderer.bounds))
+                                        overlappedPieces.Add(pieces[movedPieceId]);
+                        }
+                        else  // if dropped a piece
+                            if (pieces[currentPiece].renderer.bounds.Intersects(pieces[movedPieceId].renderer.bounds))
+                            overlappedPieces.Add(pieces[movedPieceId]);
 
-                            foreach (PuzzlePiece groupPiece in currentGroup.puzzlePieces) 
-                            {
-                                groupPiece.transform.parent = thisTransform;
-                                groupPieceId = GetPieceId (groupPiece);
+                // Try to merge overlapped pieces to groups
+                for (int i = 0; i < overlappedPieces.Count; i++)
+                    grouping |= PuzzlePieceGroup.MergeGroupsOrPieces(pieces[currentPiece], overlappedPieces[i], this);
+                overlappedPieces.Clear();
 
-                                if (invertedRules)
-                                    movedPieces.Remove (groupPieceId);
-                                else
-                                    ReturnPiece (groupPieceId, movementTime);
+                if (grouping)
+                {
+                    UpdateUngroupedPiecesList();
+                    state = PuzzleState.DropPiece;
+                }
 
-                            }
-                            Destroy (currentGroup.gameObject);
 
-                            state = PuzzleState.ReturnPiece;
-                        } 
-                        else // Just drop it
-                            state = PuzzleState.DropPiece;
+                // Assemble grouped pieces to puzzle
+                if (currentGroup != null)
+                {
+                    if (IsPieceInPlace(currentGroup.puzzlePieces[0], allowedDistance, allowedRotation) || (invertedRules && !IsPieceInPlace(currentGroup.puzzlePieces[0], allowedDistance, allowedRotation)))
+                    {
+                        int groupPieceId;
+
+                        foreach (PuzzlePiece groupPiece in currentGroup.puzzlePieces)
+                        {
+                            groupPiece.transform.parent = thisTransform;
+                            groupPieceId = GetPieceId(groupPiece);
+
+                            if (invertedRules)
+                                movedPieces.Remove(groupPieceId);
+                            else
+                                ReturnPiece(groupPieceId, movementTime);
+
+                        }
+                        Destroy(currentGroup.gameObject);
+
+                        state = PuzzleState.ReturnPiece;
                     }
-
-                }
-
-                //Assemble ungrouped piece to puzzle
-                if (currentGroup == null && !swapPuzzleMode)
-                {
-	                // Debug.Log(currentPiece + " " +  allowedDistance + " " + allowedRotation);
-	                if (IsPieceInPlace(currentPiece, allowedDistance, allowedRotation) || (invertedRules &&
-		                    !IsPieceInPlace(currentPiece, allowedDistance, allowedRotation)))
-	                {
-		                ReturnPiece(currentPiece, movementTime);
-		                state = PuzzleState.ReturnPiece;
-	                }
-	                else // Just drop it
-		                state = PuzzleState.DropPiece;
-                }
-
-
-                if (!swapPuzzleMode)
-                {
-                    currentObject = null;            
-                        currentPiece = -1;
+                    else // Just drop it
+                        state = PuzzleState.DropPiece;
                 }
 
             }
-            
-        return state;             
+
+            //Assemble ungrouped piece to puzzle
+            if (currentGroup == null && !swapPuzzleMode)
+            {
+                // Debug.Log(currentPiece + " " +  allowedDistance + " " + allowedRotation);
+                if (IsPieceInPlace(currentPiece, allowedDistance, allowedRotation) || (invertedRules &&
+                        !IsPieceInPlace(currentPiece, allowedDistance, allowedRotation)))
+                {
+                    ReturnPiece(currentPiece, movementTime);
+                    state = PuzzleState.ReturnPiece;
+                }
+                else // Just drop it
+                    state = PuzzleState.DropPiece;
+            }
+
+
+            if (!swapPuzzleMode)
+            {
+                currentObject = null;
+                currentPiece = -1;
+            }
+
+        }
+
+        return state;
     }
 
     //----------------------------------------------------------------------------------------------------
     // Decompose puzzle (randomly moves pieces to specified decompose-areas)
     // If _filterList!=null - will process only pieces from the list
-    public void DecomposePuzzle (bool _allowForUnassembled = false, List<int> _filterList = null)
-    { 
-        if (!IsAssembled()  &&  !_allowForUnassembled) 
+    public void DecomposePuzzle(bool _allowForUnassembled = false, List<int> _filterList = null)
+    {
+        if (!IsAssembled() && !_allowForUnassembled)
             return;
 
         Random.InitState(System.DateTime.Now.Millisecond);
-        
+
         Vector3 targetPosition = new Vector3(100, 100, 100);
 
         // Start decomposition cycle 
-		for (int i = 0; i < pieces.Length; i++)
-		{
+        for (int i = 0; i < pieces.Length; i++)
+        {
             pieces[i].Disassemble();
             // Initiate piece movement to it decomposed position                                                                                                         
             MovePiece(i, targetPosition, false, movementTime / 2);
-	    }
+        }
 
 
-        if (enablePiecesGroups  &&  ungroupedPieces.Count == 0) 
-            CreateUngroupedPiecesList ();
+        if (enablePiecesGroups && ungroupedPieces.Count == 0)
+            CreateUngroupedPiecesList();
 
     }
 
@@ -458,310 +454,307 @@ public class PuzzleController : MonoBehaviour
 
     //----------------------------------------------------------------------------------------------------
     // Skip randomized puzzle decomposition and use current pieces positions
-    public void NonrandomPuzzle ()
-	{ 
-		if (!IsAssembled()) 
-			return;
-		
-		invertedRules = true;
+    public void NonrandomPuzzle()
+    {
+        if (!IsAssembled())
+            return;
 
-		for (int i = 0; i < pieces.Length; i++) 
-		{
-			movedPieces.Add (i); 
-			ungroupedPieces.Add (i);
-		}
+        invertedRules = true;
 
-	}
+        for (int i = 0; i < pieces.Length; i++)
+        {
+            movedPieces.Add(i);
+            ungroupedPieces.Add(i);
+        }
 
-	//----------------------------------------------------------------------------------------------------     
-	// Claculate bounds of the puzzle in World space	 	        		 
-	void CalculateBounds()
-	{
-        puzzleBounds = new Bounds(pieces[0].renderer.bounds.center, Vector3.zero);
-         foreach (PuzzlePiece piece in pieces)
-             puzzleBounds.Encapsulate(piece.renderer.bounds);
     }
 
-	//----------------------------------------------------------------------------------------------------
-	// Check is piece close enough(within allowed position/rotation offset) to it origin to consider it returned (assembled to puzzle)
-	bool IsPieceInPlace (int _id, float _allowedDistance, float _allowedRotation) 
-	{
-		// Debug.Log("Piece " + pieces[_id].transform.name + " Pos: " + pieces[_id].transform.position);
-		// Debug.Log("PieceStartPos: " + thisTransform.TransformPoint(pieces[_id].startPosition));
-		// Debug.Log(Vector2.Distance(pieces[_id].transform.position, thisTransform.TransformPoint(pieces[_id].startPosition)));
-            return Vector2.Distance(pieces[_id].transform.position, thisTransform.TransformPoint(pieces[_id].startPosition)) < _allowedDistance
-                    && (randomizeRotation ? Mathf.Abs(pieces[_id].transform.localRotation.z - pieces[_id].startRotation.z) * Mathf.Rad2Deg < _allowedRotation : true);
+    //----------------------------------------------------------------------------------------------------     
+    // Claculate bounds of the puzzle in World space	 	        		 
+    void CalculateBounds()
+    {
+        puzzleBounds = new Bounds(pieces[0].renderer.bounds.center, Vector3.zero);
+        foreach (PuzzlePiece piece in pieces)
+            puzzleBounds.Encapsulate(piece.renderer.bounds);
+    }
 
-	}
+    //----------------------------------------------------------------------------------------------------
+    // Check is piece close enough(within allowed position/rotation offset) to it origin to consider it returned (assembled to puzzle)
+    bool IsPieceInPlace(int _id, float _allowedDistance, float _allowedRotation)
+    {
+        // Debug.Log("Piece " + pieces[_id].transform.name + " Pos: " + pieces[_id].transform.position);
+        // Debug.Log("PieceStartPos: " + thisTransform.TransformPoint(pieces[_id].startPosition));
+        // Debug.Log(Vector2.Distance(pieces[_id].transform.position, thisTransform.TransformPoint(pieces[_id].startPosition)));
+        return Vector2.Distance(pieces[_id].transform.position, thisTransform.TransformPoint(pieces[_id].startPosition)) < _allowedDistance
+                && (randomizeRotation ? Mathf.Abs(pieces[_id].transform.localRotation.z - pieces[_id].startRotation.z) * Mathf.Rad2Deg < _allowedRotation : true);
+
+    }
 
 
-	bool IsPieceInPlace (PuzzlePiece _piece, float _allowedDistance, float _allowedRotation) 
-	{
+    bool IsPieceInPlace(PuzzlePiece _piece, float _allowedDistance, float _allowedRotation)
+    {
         if (fullyIn3D)
             // return Vector3.Distance(_piece.transform.position, thisTransform.TransformPoint(_piece.startPosition)) < _allowedDistance
             return (_piece.transform.position - thisTransform.TransformPoint(_piece.startPosition)).sqrMagnitude < _allowedDistance * _allowedDistance
                      && (randomizeRotation ? Mathf.Abs(_piece.transform.localRotation.z - _piece.startRotation.z) * Mathf.Rad2Deg < _allowedRotation : true);
         else
-            return Vector2.Distance(_piece.transform.position, thisTransform.TransformPoint(_piece.startPosition)) < _allowedDistance 
-				    &&  (randomizeRotation ? Mathf.Abs(_piece.transform.localRotation.z - _piece.startRotation.z) * Mathf.Rad2Deg < _allowedRotation : true);
-	}
+            return Vector2.Distance(_piece.transform.position, thisTransform.TransformPoint(_piece.startPosition)) < _allowedDistance
+                    && (randomizeRotation ? Mathf.Abs(_piece.transform.localRotation.z - _piece.startRotation.z) * Mathf.Rad2Deg < _allowedRotation : true);
+    }
 
 
-	//----------------------------------------------------------------------------------------------------
-	// Get Id for piece under the pointer (calculates for all piecess or only moved)
-	public int GetPointedPieceId (Vector3 _pointerPosition, bool _onlyMoved)
-	{
+    //----------------------------------------------------------------------------------------------------
+    // Get Id for piece under the pointer (calculates for all piecess or only moved)
+    public int GetPointedPieceId(Vector3 _pointerPosition, bool _onlyMoved)
+    {
         // if (_onlyMoved)
-			//for (int i = 0; i < movedPieces.Count; i++) 
-			// Debug.Log("MovedPieces: " + movedPieces.Count);
-            for (int i = movedPieces.Count - 1; i >= 0; i--)
-			{
-                _pointerPosition.z = pieces[movedPieces[i]].renderer.bounds.center.z;
-                if (pieces[movedPieces[i]].renderer.bounds.Contains(_pointerPosition))
-                {
-	                // Debug.Log("Piece onlymoved: " + i);
-	                return movedPieces[i];
-                }
-			}
-		// else
-  //           for (int i = pieces.Length - 1; i >= 0; i--)
-		// 	{
-  //               _pointerPosition.z = pieces[movedPieces[i]].renderer.bounds.center.z;
-  //               if (pieces[i].renderer.bounds.Contains(_pointerPosition))
-  //               {
-	 //                // Debug.Log("Piece: " + i);
-	 //                return i;
-  //               }
-		// 	}
+        //for (int i = 0; i < movedPieces.Count; i++) 
+        // Debug.Log("MovedPieces: " + movedPieces.Count);
+        for (int i = movedPieces.Count - 1; i >= 0; i--)
+        {
+            _pointerPosition.z = pieces[movedPieces[i]].renderer.bounds.center.z;
+            if (pieces[movedPieces[i]].renderer.bounds.Contains(_pointerPosition))
+            {
+                // Debug.Log("Piece onlymoved: " + i);
+                return movedPieces[i];
+            }
+        }
+        // else
+        //           for (int i = pieces.Length - 1; i >= 0; i--)
+        // 	{
+        //               _pointerPosition.z = pieces[movedPieces[i]].renderer.bounds.center.z;
+        //               if (pieces[i].renderer.bounds.Contains(_pointerPosition))
+        //               {
+        //                // Debug.Log("Piece: " + i);
+        //                return i;
+        //               }
+        // 	}
 
 
-		return -1;  
-	}
+        return -1;
+    }
 
-	//----------------------------------------------------------------------------------------------------
-	// Get PuzzlePiece Id in pieces array
-	public int GetPieceId (PuzzlePiece _piece) 
-	{
-		for (int i = 0; i < pieces.Length; i++) 
-			if (_piece == pieces[i])  return i;
+    //----------------------------------------------------------------------------------------------------
+    // Get PuzzlePiece Id in pieces array
+    public int GetPieceId(PuzzlePiece _piece)
+    {
+        for (int i = 0; i < pieces.Length; i++)
+            if (_piece == pieces[i]) return i;
 
-		return -1;  
-	}
+        return -1;
+    }
 
-	//----------------------------------------------------------------------------------------------------
-	// Return Id of currently interacted piece
-	public PuzzlePiece GetCurrentPiece ()
-	{
-		if (currentPiece >= 0) return pieces[currentPiece];
+    //----------------------------------------------------------------------------------------------------
+    // Return Id of currently interacted piece
+    public PuzzlePiece GetCurrentPiece()
+    {
+        if (currentPiece >= 0) return pieces[currentPiece];
 
-		return null;     
-	}
+        return null;
+    }
 
     //----------------------------------------------------------------------------------------------------
     // Initiate piece movement to new position (inLocal or World Space)
     void MovePiece(int _id, Vector3 _targetPosition, bool _useLocalSpace, float _movementTime = -1)
     {
         if (_id < 0 && _id >= pieces.Length)
-        { 
+        {
             Debug.Log("<color=red>WARNING</color>: No suitable piece for returning (all in place or grouped)", gameObject);
             return;
         }
 
-		
-		if (_movementTime == 0) 
-		{
-			if (_useLocalSpace)
-			{
-				pieces[_id].transform.localPosition = _targetPosition;
-				Debug.Log("Dat piece vao cho");
-			}
-			else
-				pieces [_id].transform.position = _targetPosition;
-		}
-		else 
-			{
-			    if (_movementTime < 0)
-                    _movementTime = movementTime;	
-                 
-                StartCoroutine (pieces[_id].Move (_targetPosition, _useLocalSpace, _movementTime) );
+
+        if (_movementTime == 0)
+        {
+            if (_useLocalSpace)
+            {
+                pieces[_id].transform.localPosition = _targetPosition;
             }
-
-
-		if (_targetPosition == pieces [_id].startPosition) 
-		{
-			pieces [_id].Assemble ();
-			movedPieces.Remove (_id);
-			ungroupedPieces.Remove (_id);
-		} 
-		else 
-			if (!movedPieces.Contains(_id))
-                movedPieces.Add (_id);					
-		
-	}
-    
-
-	//----------------------------------------------------------------------------------------------------
-	// Initiate piece (with custom Id) movement to it origin position
-	public void ReturnPiece (int _id, float _movementTime = -1) 
-	{
-        if (_id > pieces.Length)
-			return;
-        
-        // If id < 0: try to get random piece
-        if (_id < 0)
-			if (enablePiecesGroups) 
-			{
-				if (ungroupedPieces.Count <= 0) return;
-				_id = ungroupedPieces [Random.Range (0, ungroupedPieces.Count)]; 
-			}
-			else
-				_id = movedPieces [Random.Range (0, movedPieces.Count)];
-
-        if (randomizeRotation)
-			pieces [_id].transform.localRotation = pieces [_id].startRotation;
-        var pos = new Vector3(pieces[_id].startPosition.x + pieces[_id].renderer.bounds.size.x / 2.5f, pieces[_id].startPosition.y - pieces[_id].renderer.bounds.size.y / 2.5f, pieces[_id].startPosition.z);
-        
-        if(particle != null)
-        {
-	        for(int i = 0; i < particle.Count; i++)
-	        {
-		        if(particle[i] != null)
-					Destroy(particle[i].gameObject);
-	        }
-	        particle.Clear();
-        }
-        if(currentGroup == null)
-        {
-	        var temp = Instantiate(GameController.Instance.pieceIn, pos, Quaternion.identity);
-	        particle.Add(temp);
-	        particle[0].Play();
+            else
+                pieces[_id].transform.position = _targetPosition;
         }
         else
         {
-	        for(int i = 0; i < currentGroup.puzzlePieces.Count; i++)
-	        {
-		        pos = new Vector3(currentGroup.puzzlePieces[i].startPosition.x + currentGroup.puzzlePieces[i].renderer.bounds.size.x / 2.5f, currentGroup.puzzlePieces[i].startPosition.y - currentGroup.puzzlePieces[i].renderer.bounds.size.y / 2.5f, currentGroup.puzzlePieces[i].startPosition.z);
-		        var temp = Instantiate(GameController.Instance.pieceIn, pos, Quaternion.identity);
-		        particle.Add(temp);
-		        particle[i].Play();
-	        }
+            if (_movementTime < 0)
+                _movementTime = movementTime;
+
+            StartCoroutine(pieces[_id].Move(_targetPosition, _useLocalSpace, _movementTime));
         }
-        MovePiece (_id, pieces [_id].startPosition, true, _movementTime);
-	}
 
-	//----------------------------------------------------------------------------------------------------
-	// Initiate currentPiece movement to it origin position
-	public void ReturnCurrentPiece (float _movementTime = -1) 
-	{ 
-		MovePiece(currentPiece, pieces[currentPiece].startPosition, true, _movementTime);
-		if (randomizeRotation)
-			pieces[currentPiece].transform.localRotation = pieces[currentPiece].startRotation;
 
-	}
+        if (_targetPosition == pieces[_id].startPosition)
+        {
+            pieces[_id].Assemble();
+            movedPieces.Remove(_id);
+            ungroupedPieces.Remove(_id);
+        }
+        else
+            if (!movedPieces.Contains(_id))
+            movedPieces.Add(_id);
 
-	//----------------------------------------------------------------------------------------------------
-	// Return all piecess to origins. Equal to full assembling of the puzzle
-	public void ReturnAll (float _movementTime = -1) 
-	{
-		for (int i = 0; i < pieces.Length; i++)  
-			MovePiece(i, pieces[i].startPosition, true, _movementTime);     
-	}
-
-	//----------------------------------------------------------------------------------------------------
-	// Enable/Disable all pieces gameObjects
-	public void SetPiecesActive (bool isActive) 
-	{
-		if (pieces != null  &&  pieces.Length > 0)
-			if (pieces[0].transform.gameObject.activeSelf != isActive)
-				for (int i = 0; i < pieces.Length; i++)  
-				    pieces[i].transform.gameObject.SetActive(isActive);   
     }
 
-	//----------------------------------------------------------------------------------------------------
-	// Check is puzzle fully assembled or not
-	public bool IsAssembled () 
-	{
-        // if (assembleInAnyPlace  &&  enablePiecesGroups)
-        // {
-	       //  if (ungroupedPieces.Count == 0 && transform.GetComponentsInChildren<PuzzlePieceGroup>().Length == 1)
-		      //   return true;
-        // }
 
+    //----------------------------------------------------------------------------------------------------
+    // Initiate piece (with custom Id) movement to it origin position
+    public void ReturnPiece(int _id, float _movementTime = -1)
+    {
+        if (_id > pieces.Length)
+            return;
 
-        if (movedPieces != null  &&  movedPieces.Count == 0)
-			return true; 
-		else 
-			return false;
-	}
+        // If id < 0: try to get random piece
+        if (_id < 0)
+            if (enablePiecesGroups)
+            {
+                if (ungroupedPieces.Count <= 0) return;
+                _id = ungroupedPieces[Random.Range(0, ungroupedPieces.Count)];
+            }
+            else
+                _id = movedPieces[Random.Range(0, movedPieces.Count)];
 
-	//-----------------------------------------------------------------------------------------------------	
-	// Save puzzle progress (Assembled pieces only)
-	public void SaveProgress (string _saveKey)
-	{
-		string saveString = "";
-		for (int i = 0; i < pieces.Length; i++)
-			if (!movedPieces.Contains(i)) saveString += (i.ToString()+"|");
+        if (randomizeRotation)
+            pieces[_id].transform.localRotation = pieces[_id].startRotation;
+        var pos = new Vector3(pieces[_id].startPosition.x + pieces[_id].renderer.bounds.size.x / 2.5f, pieces[_id].startPosition.y - pieces[_id].renderer.bounds.size.y / 2.5f, pieces[_id].startPosition.z);
 
-		PlayerPrefs.SetString(_saveKey, saveString);
-       
-		// Save pieces positions/rotation if needed
-		if (enablePositionSaving) 
-		{
-			saveString = "";
-			Vector3 piecePosition; 
-			for (int i = 0; i < movedPieces.Count; i++) 
-			{
-				piecePosition = pieces [movedPieces [i]].transform.position;
-				saveString += (movedPieces [i].ToString () + "/" + piecePosition.x.ToString () + "/" + piecePosition.y.ToString () + "/" + piecePosition.z.ToString () + "/" + pieces [movedPieces [i]].transform.rotation.eulerAngles.z.ToString () + "|");
-			}
+        if (particle != null)
+        {
+            for (int i = 0; i < particle.Count; i++)
+            {
+                if (particle[i] != null)
+                    Destroy(particle[i].gameObject);
+            }
+            particle.Clear();
+        }
+        if (currentGroup == null)
+        {
+            var temp = Instantiate(GameController.Instance.pieceIn, pos, Quaternion.identity);
+            particle.Add(temp);
+            particle[0].Play();
+        }
+        else
+        {
+            for (int i = 0; i < currentGroup.puzzlePieces.Count; i++)
+            {
+                pos = new Vector3(currentGroup.puzzlePieces[i].startPosition.x + currentGroup.puzzlePieces[i].renderer.bounds.size.x / 2.5f, currentGroup.puzzlePieces[i].startPosition.y - currentGroup.puzzlePieces[i].renderer.bounds.size.y / 2.5f, currentGroup.puzzlePieces[i].startPosition.z);
+                var temp = Instantiate(GameController.Instance.pieceIn, pos, Quaternion.identity);
+                particle.Add(temp);
+                particle[i].Play();
+            }
+        }
+        MovePiece(_id, pieces[_id].startPosition, true, _movementTime);
+    }
 
-            PlayerPrefs.SetString (_saveKey + "_Positions", saveString);	
-		}
+    //----------------------------------------------------------------------------------------------------
+    // Initiate currentPiece movement to it origin position
+    public void ReturnCurrentPiece(float _movementTime = -1)
+    {
+        MovePiece(currentPiece, pieces[currentPiece].startPosition, true, _movementTime);
+        if (randomizeRotation)
+            pieces[currentPiece].transform.localRotation = pieces[currentPiece].startRotation;
 
-	}
+    }
 
-	//-----------------------------------------------------------------------------------------------------	
-	// Load puzzle progress (Assembled pieces only)
-	public void LoadProgress (string _saveKey)
-	{
-		if (PlayerPrefs.HasKey(_saveKey)) 
-		{
+    //----------------------------------------------------------------------------------------------------
+    // Return all piecess to origins. Equal to full assembling of the puzzle
+    public void ReturnAll(float _movementTime = -1)
+    {
+        for (int i = 0; i < pieces.Length; i++)
+            MovePiece(i, pieces[i].startPosition, true, _movementTime);
+    }
+
+    //----------------------------------------------------------------------------------------------------
+    // Enable/Disable all pieces gameObjects
+    public void SetPiecesActive(bool isActive)
+    {
+        if (pieces != null && pieces.Length > 0)
+            if (pieces[0].transform.gameObject.activeSelf != isActive)
+                for (int i = 0; i < pieces.Length; i++)
+                    pieces[i].transform.gameObject.SetActive(isActive);
+    }
+
+    //----------------------------------------------------------------------------------------------------
+    // Check is puzzle fully assembled or not
+    public bool IsAssembled()
+    {
+        if (movedPieces != null && movedPieces.Count == 0)
+            return true;
+        else
+            return false;
+    }
+
+    //-----------------------------------------------------------------------------------------------------	
+    // Save puzzle progress (Assembled pieces only)
+    public void SaveProgress(string _saveKey)
+    {
+        string saveString = "";
+        for (int i = 0; i < pieces.Length; i++)
+            if (!movedPieces.Contains(i)) saveString += (i.ToString() + "|");
+
+        PlayerPrefs.SetString(_saveKey, saveString);
+
+        // Save pieces positions/rotation if needed
+        if (enablePositionSaving)
+        {
+            saveString = "";
+            Vector3 piecePosition;
+            for (int i = 0; i < movedPieces.Count; i++)
+            {
+                piecePosition = pieces[movedPieces[i]].transform.position;
+                saveString += (movedPieces[i].ToString() + "/" + piecePosition.x.ToString() + "/" + piecePosition.y.ToString() + "/" + piecePosition.z.ToString() + "/" + pieces[movedPieces[i]].transform.rotation.eulerAngles.z.ToString() + "|");
+            }
+
+            PlayerPrefs.SetString(_saveKey + "_Positions", saveString);
+        }
+
+    }
+
+    //-----------------------------------------------------------------------------------------------------	
+    // Load puzzle progress (Assembled pieces only)
+    public void LoadProgress(string _saveKey)
+    {
+        Debug.Log(_saveKey);
+        if (PlayerPrefs.HasKey(_saveKey))
+        {
             // Load and place assembled pieces            
             string[] strings = PlayerPrefs.GetString(_saveKey).Split("|"[0]);
-			for (int i = 0; i < strings.Length-1; i++)  
-				ReturnPiece (int.Parse(strings[i]), 0); 
+            for (int i = 0; i < strings.Length - 1; i++)
+            {
+                pieceAssembledIds.Add(i);
+                Debug.Log("Loading piece: " + int.Parse(strings[i]));
+                ReturnPiece(int.Parse(strings[i]), 0);
+            }
 
-			// If needed - Load pieces positions and clamp groups
-			if (enablePositionSaving  &&  PlayerPrefs.HasKey (_saveKey + "_Positions")) 
-			{
-				strings = PlayerPrefs.GetString (_saveKey + "_Positions").Split ("|" [0]);
-				string[] pieceData;
-				Vector3 pieceRotation;
+            // If needed - Load pieces positions and clamp groups
+            if (enablePositionSaving && PlayerPrefs.HasKey(_saveKey + "_Positions"))
+            {
+                strings = PlayerPrefs.GetString(_saveKey + "_Positions").Split("|"[0]);
+                string[] pieceData;
+                Vector3 pieceRotation;
 
-                for (int i = 0; i < strings.Length - 1; i++) 
-				{
-					pieceData = strings [i].Split ("/" [0]);
-					currentPiece = int.Parse (pieceData [0]);
-                    
-					MovePiece (currentPiece, new Vector3 (float.Parse (pieceData [1]), float.Parse (pieceData [2]), float.Parse (pieceData [3])), false, 0); 
+                for (int i = 0; i < strings.Length - 1; i++)
+                {
+                    pieceData = strings[i].Split("/"[0]);
+                    currentPiece = int.Parse(pieceData[0]);
 
-					if (randomizeRotation) 
-					{
-						pieceRotation = pieces [currentPiece].transform.rotation.eulerAngles;
-						pieces [currentPiece].transform.Rotate (new Vector3 (pieceRotation.x, pieceRotation.y, float.Parse (pieceData [4])));
-					}
+                    MovePiece(currentPiece, new Vector3(float.Parse(pieceData[1]), float.Parse(pieceData[2]), float.Parse(pieceData[3])), false, 0);
 
-				}
-				currentPiece = -1;
+                    if (randomizeRotation)
+                    {
+                        pieceRotation = pieces[currentPiece].transform.rotation.eulerAngles;
+                        pieces[currentPiece].transform.Rotate(new Vector3(pieceRotation.x, pieceRotation.y, float.Parse(pieceData[4])));
+                    }
 
-				Invoke ("TryToClampAllGroups", 0.1f);
-			}				
-			
-		}
-		else
-			Debug.Log("No saved data found for: <i>" + _saveKey + "</i>", gameObject);
+                }
+                currentPiece = -1;
 
-	}
+                Invoke("TryToClampAllGroups", 0.1f);
+            }
+
+        }
+        else
+            Debug.Log("No saved data found for: <i>" + _saveKey + "</i>", gameObject);
+
+    }
 
     //----------------------------------------------------------------------------------------------------
     // Reset puzzle progress and saves
@@ -780,97 +773,97 @@ public class PuzzleController : MonoBehaviour
 
         for (int i = 0; i < pieces.Length; i++)
         {
-          pieces[i].transform.parent = transform;
-          pieces[i].transform.position = pieces[i].startPosition;
-          pieces[i].transform.rotation = pieces[i].startRotation;          
+            pieces[i].transform.parent = transform;
+            pieces[i].transform.position = pieces[i].startPosition;
+            pieces[i].transform.rotation = pieces[i].startRotation;
         }
 
     }
 
     //----------------------------------------------------------------------------------------------------
     // Updates list of moved and ungrouped pieces Id
-    public void UpdateUngroupedPiecesList ()
-	{
-        for (int i = 0; i < ungroupedPieces.Count; i++) 
-			if (pieces [ungroupedPieces [i]].transform.parent != thisTransform) 
-			{
-				ungroupedPieces.RemoveAt (i);
-				i--;
-			}
-	}
+    public void UpdateUngroupedPiecesList()
+    {
+        for (int i = 0; i < ungroupedPieces.Count; i++)
+            if (pieces[ungroupedPieces[i]].transform.parent != thisTransform)
+            {
+                ungroupedPieces.RemoveAt(i);
+                i--;
+            }
+    }
 
-	//----------------------------------------------------------------------------------------------------
-	// Сreate list of moved and ungrouped pieces Id
-	public void CreateUngroupedPiecesList()
-	{
-		ungroupedPieces.Clear ();
+    //----------------------------------------------------------------------------------------------------
+    // Сreate list of moved and ungrouped pieces Id
+    public void CreateUngroupedPiecesList()
+    {
+        ungroupedPieces.Clear();
         foreach (int pieceId in movedPieces)
         {
             if (pieces[pieceId].transform.parent == thisTransform)
                 ungroupedPieces.Add(pieceId);
         }
 
-        
-	}
 
-	//-----------------------------------------------------------------------------------------------------	
-	// Try to find and clamp all pieces/groups
-	void TryToClampAllGroups ()
-	{
-		if (enablePiecesGroups) 
-		{
-			overlappedPieces.Clear ();
-			for (int i = 0; i < movedPieces.Count; i++) 
-			{	
-				currentObjectTransform = pieces [movedPieces [i]].transform;
-					
-				foreach (int movedPieceId in movedPieces)
-					if (movedPieces [i] != movedPieceId)
-						if (currentObjectTransform.parent == thisTransform  ||  (currentObjectTransform.parent != thisTransform  &&  currentObjectTransform.parent != pieces [movedPieceId].transform.parent))
-							if (pieces [movedPieces [i]].renderer.bounds.Intersects (pieces [movedPieceId].renderer.bounds))
-								overlappedPieces.Add (pieces [movedPieceId]);
-				
+    }
 
-				for (int j = 0; j < overlappedPieces.Count; j++)
-					PuzzlePieceGroup.MergeGroupsOrPieces (pieces [movedPieces [i]], overlappedPieces [j], this);
-				overlappedPieces.Clear ();
-			}				
-				
-            CreateUngroupedPiecesList ();
-		}
+    //-----------------------------------------------------------------------------------------------------	
+    // Try to find and clamp all pieces/groups
+    void TryToClampAllGroups()
+    {
+        if (enablePiecesGroups)
+        {
+            overlappedPieces.Clear();
+            for (int i = 0; i < movedPieces.Count; i++)
+            {
+                currentObjectTransform = pieces[movedPieces[i]].transform;
 
-	}
+                foreach (int movedPieceId in movedPieces)
+                    if (movedPieces[i] != movedPieceId)
+                        if (currentObjectTransform.parent == thisTransform || (currentObjectTransform.parent != thisTransform && currentObjectTransform.parent != pieces[movedPieceId].transform.parent))
+                            if (pieces[movedPieces[i]].renderer.bounds.Intersects(pieces[movedPieceId].renderer.bounds))
+                                overlappedPieces.Add(pieces[movedPieceId]);
+
+
+                for (int j = 0; j < overlappedPieces.Count; j++)
+                    PuzzlePieceGroup.MergeGroupsOrPieces(pieces[movedPieces[i]], overlappedPieces[j], this);
+                overlappedPieces.Clear();
+            }
+
+            CreateUngroupedPiecesList();
+        }
+
+    }
 
     //===================================================================================================== 
     // Automatically generate puzzle background from the source image
     public SpriteRenderer GenerateBackground(Texture2D _image, int index,
-	    bool _centerAnchoring = true, bool _adjustToPuzzle = true)
+        bool _centerAnchoring = true, bool _adjustToPuzzle = true)
     {
-	    if (_image == null)
-	    {
-		    Debug.Log("There's no source image passed (or puzzle generated)", gameObject);
-		    return null;
-	    }
+        if (_image == null)
+        {
+            Debug.Log("There's no source image passed (or puzzle generated)", gameObject);
+            return null;
+        }
 
-	    GameObject background = new GameObject(index + "_background");
+        GameObject background = new GameObject(index + "_background");
 
-	    SpriteRenderer spriteRenderer = background.AddComponent<SpriteRenderer>();
-	    spriteRenderer.sprite = Sprite.Create(_image, new Rect(0.0f, 0.0f, _image.width, _image.height), _centerAnchoring ? new Vector2(0.5f, 0.5f) : new Vector2(0, 1));
+        SpriteRenderer spriteRenderer = background.AddComponent<SpriteRenderer>();
+        spriteRenderer.sprite = Sprite.Create(_image, new Rect(0.0f, 0.0f, _image.width, _image.height), _centerAnchoring ? new Vector2(0.5f, 0.5f) : new Vector2(0, 1));
 
-	    // Adjust background to puzzle
-	    if (_adjustToPuzzle)
-	    {
-		    background.transform.gameObject.SetActive(true);
-		    background.transform.localScale = new Vector3(0.254f, 0.254f, 0.254f);
-		    background.transform.localPosition = new Vector3(0, 0, 0.2f);
-	    }
-        
-
-	    //spriteRenderer.sortingLayerID = -1;
-	    background.tag = "Puzzle_Background"; 
+        // Adjust background to puzzle
+        if (_adjustToPuzzle)
+        {
+            background.transform.gameObject.SetActive(true);
+            background.transform.localScale = new Vector3(0.254f, 0.254f, 0.254f);
+            background.transform.localPosition = new Vector3(0, 0, 0.2f);
+        }
 
 
-	    return spriteRenderer;
+        //spriteRenderer.sortingLayerID = -1;
+        background.tag = "Puzzle_Background";
+
+
+        return spriteRenderer;
     }
 
     //-----------------------------------------------------------------------------------------------------	
@@ -895,7 +888,7 @@ public class PuzzleController : MonoBehaviour
 
         foreach (var piece in pieces)
             piece.transform.position = new Vector3(piece.transform.position.x - anchorOffset.x, anchorOffset.y + piece.transform.position.y, piece.transform.position.z);
-        
+
 
         anchoring = _anchor;
         return anchoring;
@@ -903,7 +896,7 @@ public class PuzzleController : MonoBehaviour
 
     //-----------------------------------------------------------------------------------------------------	
     // Automatically align puzzle with camera center
-    public void AlignWithCameraCenter(Camera _camera, bool _centerAnchoring, bool changeCameraSize = true,  float _cameraSizeTuner = 0)
+    public void AlignWithCameraCenter(Camera _camera, bool _centerAnchoring, bool changeCameraSize = true, float _cameraSizeTuner = 0)
     {
         if (_camera == null)
             _camera = Camera.main;
@@ -916,8 +909,8 @@ public class PuzzleController : MonoBehaviour
             // CalculateBounds();
 
             // Change camera view size according to size of (puzzle + decompose areas)
-            if (_camera.orthographic  &&  changeCameraSize)
-                _camera.orthographicSize = Mathf.Ceil((puzzleBounds.size.x + (horizontalAreasSize.x + horizontalAreaOffset.x)*2)/4) + _cameraSizeTuner;
+            if (_camera.orthographic && changeCameraSize)
+                _camera.orthographicSize = Mathf.Ceil((puzzleBounds.size.x + (horizontalAreasSize.x + horizontalAreaOffset.x) * 2) / 4) + _cameraSizeTuner;
 
         }
         else
@@ -936,14 +929,14 @@ public class PuzzleController : MonoBehaviour
 
         _camera.orthographicSize += _camera.orthographicSize * (boundsInView.x - 1) * 2;
 
-        
+
         // Adjust position
         boundsInView = _camera.WorldToViewportPoint(puzzleBounds.min);
-        
-        float positionModifier = 0; 
+
+        float positionModifier = 0;
         switch (_anchor)
         {
-             case ScreenAnchor.TopLeft:
+            case ScreenAnchor.TopLeft:
                 positionModifier = 1;
                 break;
             case ScreenAnchor.Center:
@@ -965,8 +958,8 @@ public class PuzzleController : MonoBehaviour
 
     //===================================================================================================== 
     // Utility visualization function
-    void OnDrawGizmos () 
-	{		
+    void OnDrawGizmos()
+    {
         if (movedPieces != null)
             for (int i = 0; i < movedPieces.Count; i++)
             {
@@ -977,46 +970,33 @@ public class PuzzleController : MonoBehaviour
 
                 Gizmos.DrawWireCube(pieces[movedPieces[i]].renderer.bounds.center, pieces[movedPieces[i]].renderer.bounds.size);
             }
-      
+
         // Draw PuzzleBounds
         Gizmos.color = Color.grey;
-        Gizmos.DrawWireCube(puzzleBounds.center, puzzleBounds.size);          
+        Gizmos.DrawWireCube(puzzleBounds.center, puzzleBounds.size);
 
 
         // Set color according to Application state and  re-calculate bounds(only in editor mode)
-        if (!Application.isPlaying) 
-			Gizmos.color = new Color ( 0.25f, 0.25f, 0.75f, 0.5f);
-		else
-			Gizmos.color = new Color ( 0.5f, 0.5f, 0.5f, 0.3f);
+        if (!Application.isPlaying)
+            Gizmos.color = new Color(0.25f, 0.25f, 0.75f, 0.5f);
+        else
+            Gizmos.color = new Color(0.5f, 0.5f, 0.5f, 0.3f);
 
+        // Draw spheres at both points
+        Gizmos.color = Color.red;
+        Gizmos.DrawSphere(topRight, 0.2f);
 
-		// Draw a semitransparent cubes to visualize decomposition areas 
-		Vector3 position;
-		if (decomposeToLeft) 
-		{
-			position = new Vector3(puzzleBounds.min.x - horizontalAreaOffset.x - horizontalAreasSize.x/2,  puzzleBounds.center.y + horizontalAreaOffset.y, horizontalAreaOffset.z);
-			Gizmos.DrawCube (position, horizontalAreasSize);
-		}
+        Gizmos.color = Color.green;
+        Gizmos.DrawSphere(bottomLeft, 0.2f);
 
-        if (decomposeToRight)
-        {
-            position = new Vector3(puzzleBounds.max.x + horizontalAreaOffset.x + horizontalAreasSize.x / 2, puzzleBounds.center.y + horizontalAreaOffset.y, horizontalAreaOffset.z);
-            Gizmos.DrawCube(position, horizontalAreasSize);
-        }
+        // Optional: draw a rectangle between them
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawLine(topRight, new Vector3(bottomLeft.x, topRight.y, topRight.z));
+        Gizmos.DrawLine(bottomLeft, new Vector3(bottomLeft.x, topRight.y, bottomLeft.z));
+        Gizmos.DrawLine(topRight, new Vector3(topRight.x, bottomLeft.y, topRight.z));
+        Gizmos.DrawLine(bottomLeft, new Vector3(topRight.x, bottomLeft.y, bottomLeft.z));
 
-        if (decomposeToTop)
-		{
-			position = new Vector3(puzzleBounds.center.x + verticalAreaOffset.x, puzzleBounds.max.y + verticalAreasSize.y/2 + verticalAreaOffset.y, verticalAreaOffset.z);
-            Gizmos.DrawCube(position, verticalAreasSize);
-        }
+    }
 
-		if (decomposeToBottom)
-		{
-			position = new Vector3(puzzleBounds.center.x + verticalAreaOffset.x, puzzleBounds.min.y - verticalAreasSize.y/2 - verticalAreaOffset.y, verticalAreaOffset.z);
-            Gizmos.DrawCube(position, verticalAreasSize);
-        }
- 
-	}
-
-	//-----------------------------------------------------------------------------------------------------	
+    //-----------------------------------------------------------------------------------------------------	
 }

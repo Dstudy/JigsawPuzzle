@@ -105,11 +105,7 @@ public class PuzzleGenerator_Runtime: MonoBehaviour
         puzzle.allowedDistance = allowedDistance;
         puzzle.allowedRotation = allowedRotation;
         puzzle.randomizeRotation = randomizeRotation;
-
-        puzzle.decomposeToLeft = decomposeToLeft;
-        puzzle.decomposeToRight = decomposeToRight;
-        puzzle.decomposeToTop = decomposeToTop;
-        puzzle.decomposeToBottom = decomposeToBottom;
+        
         puzzle.horizontalAreasSize = horizontalAreasSize;
         puzzle.autoHorizontalAreaOffset = autoHorizontalAreaOffset;
         puzzle.horizontalAreaOffset = horizontalAreaOffset;
@@ -165,6 +161,7 @@ public class PuzzleGenerator_Runtime: MonoBehaviour
     // Generate puzzle-pieces gameObjects and compose them in the scene
     GameObject CreateGameObjects () 
 	{
+		Debug.Log("Generating puzzle: " + image.name + " (" + cols.ToString() + "x" + rows.ToString() + ")");
 		Vector2 spriteBaseSize = new Vector2(image.width/(float)cols/pixelsPerUnit, image.height/(float)rows/pixelsPerUnit);
 		GameObject puzzle = new GameObject();
 		GameObject piece;
@@ -201,7 +198,8 @@ public class PuzzleGenerator_Runtime: MonoBehaviour
 
 					shadowRenderer = shadow.GetComponent<SpriteRenderer>();
 					shadowRenderer.color = shadowColor;
-					shadowRenderer.sortingOrder = -1;
+					// Set này tác động lên cha
+					shadowRenderer.sortingOrder = 1;
 				}
 
 				// Assign custom material to puzzle-piece (if neended)
@@ -247,6 +245,8 @@ public class PuzzleGenerator_Runtime: MonoBehaviour
                                                                 _subElement,
                                                                 topPixels, leftPixels
                                                              );
+                
+                
 
                 // Extract and mask image-piece to be used as puzzle-piece texture
                 puzzleGrid[y*_cols + x].texture = ExtractFromImage (_image, puzzleGrid[y*_cols + x], x, y, _elementBaseSize, elementSizeRatio);   
@@ -256,9 +256,10 @@ public class PuzzleGenerator_Runtime: MonoBehaviour
 																((float)puzzleGrid[y*_cols + x].pixelOffset.x / puzzleGrid[y*_cols + x].texture.width * elementSizeRatio.x), 
 																(1.0f - (float)puzzleGrid[y*_cols + x].pixelOffset.y / puzzleGrid[y*_cols + x].texture.height * elementSizeRatio.y)
 															);
+				
+				puzzle.piecePivots.Add(puzzleGrid[y*_cols + x].pivot);
 			}
-
-
+        Debug.LogWarning("Done");
 		return elementSizeRatio; 
 	}
 

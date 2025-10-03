@@ -1,19 +1,10 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.Net;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using DG.Tweening;
-using Unity.VisualScripting;
-using UnityEditor;
 using UnityEngine.Serialization;
-using UnityEngine.UIElements;
-using UnityEngine.VFX;
-using Image = UnityEngine.UI.Image;
 
 //
 public class HScrollController : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler
@@ -32,12 +23,11 @@ public class HScrollController : MonoBehaviour, IDragHandler, IBeginDragHandler,
      public PieceScroll currentClickScroll;
      public RectTransform parentElement;
      public Transform parentDrag;
-     public new Camera camera;
-     public bool canDrag = false;
-     public bool dragState = false;
+     public Camera uiCamera;
+     public bool canDrag;
      [SerializeField] private Vector2 startPoint;
 //     
-     public HorizontalLayoutGroup HLG;
+     public HorizontalLayoutGroup hlg;
      public ContentSizeFitter contentSizeFitter;
 
      public List<float> posList = new List<float>();
@@ -50,16 +40,19 @@ public class HScrollController : MonoBehaviour, IDragHandler, IBeginDragHandler,
      private RaycastHit hit;
 
      public bool outScroll = true;
+     private bool dragActivated;
 
      // private bool ok = true;
-     GameObject tempObject = null;
+     GameObject tempObject;
+     private const float DRAG_SQR_THRESHOLD = 700f;
+     private const float ANGLE_THRESHOLD = 60f;
+     
+     bool _layoutDirty;
 
 
     private void Start()
     {
         Vector3 bottomLeft = Camera.main.ViewportToWorldPoint(Vector3.zero);
-        
-        // Debug.Log(bottomLeft.y + " "  + transform.position.y + " " + GetComponent<Image>().sprite.bounds.extents.y + " res:" + (transform.position.y + GetComponent<Image>().sprite.bounds.extents.y*2));
         
         StartCoroutine(LateStart(0.1f));
         InitPiece();
@@ -69,6 +62,14 @@ public class HScrollController : MonoBehaviour, IDragHandler, IBeginDragHandler,
             Camera.main.orthographicSize += (9f - Camera.main.orthographicSize * Screen.width / Screen.height);
         }
         
+    }
+
+    private void LateUpdate()
+    {
+        if (!_layoutDirty) return;
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(parentElement);
+        _layoutDirty = false;
     }
 
     IEnumerator LateStart(float waitTime)
@@ -102,47 +103,36 @@ public class HScrollController : MonoBehaviour, IDragHandler, IBeginDragHandler,
      {
          // Gán startPoint = vị trí của chuột hoặc ngón tay trên màn hình
          startPoint = eventData.position;
+         dragActivated = false;
+         
+         FreezeScroll(); 
      }
 //     
      // Khi thả không kéo mảnh tranh nữa
      public void OnEndDrag(PointerEventData eventData)
      {
-         
+         dragActivated = false;   
+         UnfreezeScroll();
      }
 //     
 //     // Khi đang kéo mảnh tranh
      public void OnDrag(PointerEventData eventData)
      {
-         // Tạo một vector directionDrag tính toán hướng kéo của người dùng.
+         if (dragActivated) return;  
+         if (!canDrag || currentClickScroll == null) return; 
+
          var directionDrag = eventData.position - startPoint;
-         // Nếu khoảng cách kéo quá nhỏ hoặc vùng cuộn bị tắt hoặc không có mảnh nào được kéo hặc không được phép kéo mảnh tranh thì kết thúc hàm
-         if (!(Vector2.SqrMagnitude(directionDrag) > 700f) || scroll.enabled == false || currentClickScroll == null || canDrag == false)
-         {
-             return;
-         }
-         // Tính angleDrag là góc giữa 2 vector tính toán hướng kéo của người dùng và Vector2.up
+         if (directionDrag.sqrMagnitude < DRAG_SQR_THRESHOLD) return;
+
          var angleDrag = Vector2.Angle(directionDrag.normalized, Vector2.up);
-         // Debug.Log("AngleDrag: " + angleDrag);
-         const float tempAngle = 60;
-         // Nếu angleDrag < 70 độ và được phép kéo mảnh tranh
-         if (angleDrag < tempAngle && canDrag)
-         {
-             Debug.Log("AngleDrag: " + angleDrag);
+         if (angleDrag >= ANGLE_THRESHOLD) return;
+
+         dragActivated = true;
+
+         if (!currentClickScroll.isDragging)
              currentClickScroll.ActivePieceDrag();
-             scroll.enabled = false;
-             ReArrange();
-             // GamePlayController.Instance.blockRaycast.SetActive(true);
-         }
-     }
 
-
-     public void ReArrange()
-     {
-         for(int i = 0; i < parentElement.childCount; i++)
-         {
-             var child = parentElement.GetChild(i);
-             child.localPosition = new Vector3(child.localPosition.x, -26f, child.localPosition.z);
-         }
+         scroll.enabled = false;
      }
      
 
@@ -211,23 +201,26 @@ public class HScrollController : MonoBehaviour, IDragHandler, IBeginDragHandler,
 
      public IEnumerator Arrange()
      {
+         FreezeScroll();
          GameController.Instance.blockRaycast.SetActive(true);
          int n = Mathf.Min(10, parentElement.childCount);
+         int safeIndex = Mathf.Min(10, posList.Count - 1);
+         float targetX = posList.Count > 0 ? posList[safeIndex] : 0f;
          for (int i = 0; i < n; i++)
          {
-             parentElement.GetChild(i).transform.DOLocalMove(new Vector3(posList[10], parentElement.GetChild(i).localPosition.y, parentElement.GetChild(i).localPosition.z), 0.4f);
+             parentElement.GetChild(i).transform.DOLocalMove(new Vector3(targetX, parentElement.GetChild(i).localPosition.y, parentElement.GetChild(i).localPosition.z), 0.4f);
          }
          yield return new WaitForSeconds(0.4f);
          ArrangePos();
          tempObject.transform.DOScaleX(0, 0.1f);
          contentSizeFitter.enabled = false;
-         ReArrange();
          yield return new WaitForSeconds(0.1f);
          tempObject.GetComponent<RectTransform>().sizeDelta = new Vector2(0,0);
          Destroy(tempObject);
          contentSizeFitter.enabled = true;
-         ReArrange();
-            GameController.Instance.blockRaycast.SetActive(false);
+         // ReArrange();
+        GameController.Instance.blockRaycast.SetActive(false);
+        UnfreezeScroll();
      }
 
      void SlotOut()
@@ -239,6 +232,19 @@ public class HScrollController : MonoBehaviour, IDragHandler, IBeginDragHandler,
                  SlotCtl.Instance.slots.RemoveAt(i);
              }
          }
+     }
+     
+     public void RemovePiece(int id)
+     {
+            for(int i = 0; i < parentElement.childCount; i++)
+            {
+                if (parentElement.GetChild(i).GetComponent<PieceScroll>().id == id)
+                {
+                    SlotCtl.Instance.slots.RemoveAt(i);
+                    Destroy(parentElement.GetChild(i).gameObject);
+                    _layoutDirty = true;
+                }
+            }
      }
 
      void ReturnSlot()
@@ -295,10 +301,14 @@ public class HScrollController : MonoBehaviour, IDragHandler, IBeginDragHandler,
 
      public void UpdatePos()
      {
-         for(int i  = 0; i < parentElement.childCount; i++)
-         {
-             parentElement.GetChild(i).transform.localPosition = new Vector3(parentElement.GetChild(i).transform.localPosition.x, 0, 0);
-         }
+         // for(int i  = 0; i < parentElement.childCount; i++)
+         // {
+         //     var pos = parentElement.GetChild(i).GetComponent<RectTransform>().localPosition;
+         //     pos.x = posList[i];
+         //     parentElement.GetChild(i).transform.localPosition = new Vector3(parentElement.GetChild(i).transform.localPosition.x, 0f, 0);
+         // }
+         Debug.Log("Update Pos");
+         
      }
 
      public void ShufflePuzzle()
@@ -329,6 +339,7 @@ public class HScrollController : MonoBehaviour, IDragHandler, IBeginDragHandler,
      
      public IEnumerator Shuffle()
      {
+         FreezeScroll();
          GameController.Instance.blockRaycast.SetActive(true);
          int n = Mathf.Min(10, parentElement.childCount);
          for (int i = 0; i < n; i++)
@@ -344,6 +355,21 @@ public class HScrollController : MonoBehaviour, IDragHandler, IBeginDragHandler,
          Destroy(tempObject);
          contentSizeFitter.enabled = true;
          GameController.Instance.blockRaycast.SetActive(false);
+        UnfreezeScroll();
+     }
+     
+     void FreezeScroll()
+     {
+         if (!scroll) return;
+         scroll.StopMovement();
+         scroll.velocity = Vector2.zero;
+         scroll.inertia = false;         // tắt tạm
+     }
+
+     void UnfreezeScroll(bool inertia = true)
+     {
+         if (!scroll) return;
+         scroll.inertia = inertia;       // bật lại nếu muốn
      }
      
 }

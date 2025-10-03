@@ -44,6 +44,13 @@ public class PuzzlePiece
 		return pieceCenterOffset;
 	}
 
+	public Vector2 GetPievePivotOffset()
+	{
+		Vector3 pivotWorldPos = renderer.bounds.center - (Vector3)GetPieceCenterOffset();
+		Vector3 pivotLocalPos = transform.InverseTransformPoint(pivotWorldPos);
+		return pivotWorldPos;
+	}
+
     //---------------------------------------------------------------------------------------------------- 
     // Process piece movement  
     public IEnumerator Move (Vector3 _targetPosition, bool _inLocalSpace, float _movementTime) 
