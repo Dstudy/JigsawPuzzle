@@ -29,6 +29,7 @@ public class LevelCtl : MonoBehaviour
      public float maxHeight = 0;
      public HScrollController controller;
      
+     
      private void Awake()
      {
          if(Instance == null)
@@ -39,9 +40,18 @@ public class LevelCtl : MonoBehaviour
          size = LevelData.Instance.size;
      }
 
+     private void DeleteData()
+     {
+         // Remove everything
+         PlayerPrefs.DeleteAll();
+
+        // Don’t forget to save
+                 PlayerPrefs.Save();
+     }
+
      public void InitLevel(int index)
      {
-        currentSize = size[index];
+         currentSize = size[index];
          Debug.Log("Level Index: " + index);
          PuzzleController currentPuzzle = null;
          if(puzzles[index] == null)
@@ -94,6 +104,9 @@ public class LevelCtl : MonoBehaviour
          for (int i = 0; i < pieceNum; i++)
          {
              slots.Add(level[index].transform.GetChild(i).gameObject.GetComponent<PieceScroll>());
+             slots[i].Init();
+             if(slots[i].pieceImg.rectTransform == null)
+                 Debug.Log("Slot " + i + " null");
              var sizeNew = slots[i].pieceImg.rectTransform.sizeDelta;
              if((sizeNew*shrink).y > maxHeight)
                  maxHeight = (sizeNew*shrink).y;
@@ -140,14 +153,6 @@ public class LevelCtl : MonoBehaviour
          for (int i = 0; i < curlevel.transform.childCount; i++)
          {
              Destroy(curlevel.transform.GetChild(i).gameObject);
-         }
-
-         foreach (var pieceID in currentPuzzle.pieceAssembledIds)
-         {
-             // if(piece >= 0 && piece < SlotCtl.Instance.slots.Count)
-             // {
-             GameController.Instance.controller.RemovePiece(pieceID);
-             // }
          }
      }
 //     

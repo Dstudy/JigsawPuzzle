@@ -80,7 +80,6 @@ public class PuzzleController : MonoBehaviour
     public Material pieceMaterial_assembled;
     public Transform thisTransform;
     public PuzzleState state;
-    public ScrollRect scrollRect;
 
 
     public int remainingPieces { get { return movedPieces.Count; } }
@@ -115,6 +114,8 @@ public class PuzzleController : MonoBehaviour
     public static PuzzleController Instance;
 
     [SerializeField] private List<ParticleSystem> particle;
+    
+    public Action<int> onPieceAssembled;
 
     private void Awake()
     {
@@ -124,7 +125,6 @@ public class PuzzleController : MonoBehaviour
 
     private void Start()
     {
-        scrollRect = GameController.Instance.controller.scroll;
         scrollArea = GameController.Instance.ScrollArea.GetComponent<BoxCollider>();
 
         if (particle != null)
@@ -137,6 +137,8 @@ public class PuzzleController : MonoBehaviour
         topRight = Camera.main.ViewportToWorldPoint(Vector3.one);
         topRight.y -= NavBarController.Instance.GetComponent<Image>().sprite.bounds.size.y;
         bottomLeft = Camera.main.ViewportToWorldPoint(Vector3.zero);
+        
+        
     }
 
 
@@ -184,8 +186,8 @@ public class PuzzleController : MonoBehaviour
         }
 
         gameObject.tag = "Puzzle_Main";
+        
     }
-
 
     //-----------------------------------------------------------------------------------------------------	
     // Process puzzle during gameplay (including user input)
@@ -507,9 +509,6 @@ public class PuzzleController : MonoBehaviour
     // Get Id for piece under the pointer (calculates for all piecess or only moved)
     public int GetPointedPieceId(Vector3 _pointerPosition, bool _onlyMoved)
     {
-        // if (_onlyMoved)
-        //for (int i = 0; i < movedPieces.Count; i++) 
-        // Debug.Log("MovedPieces: " + movedPieces.Count);
         for (int i = movedPieces.Count - 1; i >= 0; i--)
         {
             _pointerPosition.z = pieces[movedPieces[i]].renderer.bounds.center.z;
@@ -519,18 +518,6 @@ public class PuzzleController : MonoBehaviour
                 return movedPieces[i];
             }
         }
-        // else
-        //           for (int i = pieces.Length - 1; i >= 0; i--)
-        // 	{
-        //               _pointerPosition.z = pieces[movedPieces[i]].renderer.bounds.center.z;
-        //               if (pieces[i].renderer.bounds.Contains(_pointerPosition))
-        //               {
-        //                // Debug.Log("Piece: " + i);
-        //                return i;
-        //               }
-        // 	}
-
-
         return -1;
     }
 
@@ -563,7 +550,6 @@ public class PuzzleController : MonoBehaviour
             return;
         }
 
-
         if (_movementTime == 0)
         {
             if (_useLocalSpace)
@@ -591,7 +577,8 @@ public class PuzzleController : MonoBehaviour
         else
             if (!movedPieces.Contains(_id))
             movedPieces.Add(_id);
-
+        
+        onPieceAssembled?.Invoke(_id);
     }
 
 
@@ -625,23 +612,38 @@ public class PuzzleController : MonoBehaviour
             }
             particle.Clear();
         }
+
+        if (_movementTime < 0)
+        {
+            _movementTime = movementTime;
+        }
         if (currentGroup == null)
         {
-            var temp = Instantiate(GameController.Instance.pieceIn, pos, Quaternion.identity);
-            particle.Add(temp);
-            particle[0].Play();
+            
+            StartCoroutine(PLayParticle(0, _movementTime, pos));
         }
         else
         {
             for (int i = 0; i < currentGroup.puzzlePieces.Count; i++)
             {
                 pos = new Vector3(currentGroup.puzzlePieces[i].startPosition.x + currentGroup.puzzlePieces[i].renderer.bounds.size.x / 2.5f, currentGroup.puzzlePieces[i].startPosition.y - currentGroup.puzzlePieces[i].renderer.bounds.size.y / 2.5f, currentGroup.puzzlePieces[i].startPosition.z);
-                var temp = Instantiate(GameController.Instance.pieceIn, pos, Quaternion.identity);
-                particle.Add(temp);
-                particle[i].Play();
+                StartCoroutine(PLayParticle(i, _movementTime, pos));
             }
         }
         MovePiece(_id, pieces[_id].startPosition, true, _movementTime);
+    }
+
+    IEnumerator PLayParticle(int _id, float _movementTime, Vector2 _pos)
+    {
+        Debug.Log(_movementTime);
+        if(_id == 0)
+            yield return new WaitForSeconds(_movementTime);
+        if (particle != null)
+        {
+            var temp = Instantiate(GameController.Instance.pieceIn, _pos, Quaternion.identity);
+            particle.Add(temp);
+            
+        }
     }
 
     //----------------------------------------------------------------------------------------------------

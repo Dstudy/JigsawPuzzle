@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------------------------------------------------------------------------------------------
 // Generates puzzle in runtime -  according to settings, create/place puzzle-pieces in the scene
 // Just attach it to any gameObject and setup in Inspector - then you can call it CreatePuzzle() function from any script to start the generation.
-//
+// Cái này khum dung nha, nhung cu de day sau dung cx dc
 // IMPORTANT: Source Image and sub-element image should be manually set to RGBA32 and Read/Write enabled (isReadable)
 //----------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -257,7 +257,6 @@ public class PuzzleGenerator_Runtime: MonoBehaviour
 																(1.0f - (float)puzzleGrid[y*_cols + x].pixelOffset.y / puzzleGrid[y*_cols + x].texture.height * elementSizeRatio.y)
 															);
 				
-				puzzle.piecePivots.Add(puzzleGrid[y*_cols + x].pivot);
 			}
         Debug.LogWarning("Done");
 		return elementSizeRatio; 

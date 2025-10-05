@@ -763,13 +763,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   puzzles:
-  - {fileID: 435707421148704288, guid: 7c482c59ca1aa35489d14fc4d82aced6, type: 3}
-  - {fileID: 2218840934631552898, guid: ce05dbd5c24bd6e4499575d8440485fc, type: 3}
-  - {fileID: 3346167557263746880, guid: 48d071abc308dca43b748e7f1f842ef5, type: 3}
+  - {fileID: 328915044246531997, guid: a03aa4341c5fea2439436d07217f607a, type: 3}
+  - {fileID: 6858029221055521629, guid: 48f5a247f413be644b309822cdba7850, type: 3}
+  - {fileID: 2441209407334818686, guid: fd702df2bb3ee274da9b10518146a43a, type: 3}
   level:
-  - {fileID: 298674698729950250, guid: c8d0ea449eb507f48a9316b180ed1cec, type: 3}
-  - {fileID: 252726895707526887, guid: c7db51623e8e5d8498e65be914f9cb60, type: 3}
-  - {fileID: 4221708691453222776, guid: 46fd38dace6949b41ba2c8cc07cbd60d, type: 3}
+  - {fileID: 8194988150158572140, guid: 9cda1616bbc34484fabf685c494fd4d2, type: 3}
+  - {fileID: 2170514885755803849, guid: 24a4aad6eb981224fbee4aa09c43d04e, type: 3}
+  - {fileID: 5295366131665762081, guid: 512e3c7f05da0e74da01d12b8ab39783, type: 3}
   size: 080000000a0000000c000000
 --- !u!4 &1192561537
 Transform:

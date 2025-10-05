@@ -56,12 +56,12 @@ public class HScrollController : MonoBehaviour, IDragHandler, IBeginDragHandler,
         
         StartCoroutine(LateStart(0.1f));
         InitPiece();
-        // ShufflePuzzle();
         if(Camera.main.orthographicSize * Screen.width/Screen.height < 9f)
         {
             Camera.main.orthographicSize += (9f - Camera.main.orthographicSize * Screen.width / Screen.height);
         }
-        
+
+        PuzzleController.Instance.onPieceAssembled += RemovePiece;
     }
 
     private void LateUpdate()
@@ -149,8 +149,6 @@ public class HScrollController : MonoBehaviour, IDragHandler, IBeginDragHandler,
              yPosList.Add(child.localPosition.y);
              // Debug.Log(child.localPosition);
          }
-         
-         UpdatePos();
      }
      
      public void ArrangePos()
@@ -298,19 +296,7 @@ public class HScrollController : MonoBehaviour, IDragHandler, IBeginDragHandler,
              }
          }
      }
-
-     public void UpdatePos()
-     {
-         // for(int i  = 0; i < parentElement.childCount; i++)
-         // {
-         //     var pos = parentElement.GetChild(i).GetComponent<RectTransform>().localPosition;
-         //     pos.x = posList[i];
-         //     parentElement.GetChild(i).transform.localPosition = new Vector3(parentElement.GetChild(i).transform.localPosition.x, 0f, 0);
-         // }
-         Debug.Log("Update Pos");
-         
-     }
-
+     
      public void ShufflePuzzle()
      {
          List<int> list = new List<int>();

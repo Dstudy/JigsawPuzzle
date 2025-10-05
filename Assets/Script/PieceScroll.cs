@@ -51,13 +51,12 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
          Instance = this;
          rect = GetComponent<RectTransform>();
          pieceImg = GetComponent<Image>();
-         
      }
 
-     private void Start()
+     public void Init()
      {
+         pieceImg = GetComponent<Image>();
          rect = GetComponent<RectTransform>();
-         
      }
 
      public void Init(HScrollController Controller)
@@ -139,11 +138,6 @@ public class PieceScroll : MonoBehaviour, IPointerDownHandler
 
      private void Update()
      {
-         // if (!isDragging && gameObject.activeInHierarchy)
-         // {
-         //     transform.localPosition = new Vector3(transform.localPosition.x, -26f, transform.localPosition.z);
-         // }
-         
          if (controller.canDrag && isDragging)
          {
              // var wordPos = GetMousePos(tempPos);

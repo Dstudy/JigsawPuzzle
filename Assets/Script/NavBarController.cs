@@ -21,6 +21,9 @@ public class NavBarController : MonoBehaviour
     public GameObject showBg, showMusic;
     public GameObject hideBg, hideMusic;
     public SpriteRenderer backGround;
+    public Button hintBtn;
+    public Text hintText;
+    public GameObject ads;
 
     public GameObject BGPanel;
 
@@ -98,6 +101,7 @@ public class NavBarController : MonoBehaviour
             GameController.Instance.Save();
             SceneManager.LoadScene("Menu");
         }));
+        
     }
 
     

@@ -119,8 +119,9 @@ public class WinAnimation : MonoBehaviour
         gameInfor.SetActive(true);
         if(!textContainer.activeInHierarchy)
             textContainer.SetActive(true);
+        string textTime = GameController.Instance.GetElapsedTime();
         if(timeText != null)
-            timeText.text = GameController.Instance.elapsedTime.ToString();
+            timeText.text = textTime;
         if(pieceNum != null)
             pieceNum.text = GameController.Instance.puzzle.totalPieces.ToString();
     }

@@ -1,5 +1,5 @@
 ﻿//----------------------------------------------------------------------------------------------------------------------------------------------------------
-// Editor script - Generates puzzle atlas and textures according to settings, create/place puzzle-pieces in the scene
+// 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using System;
@@ -260,11 +260,11 @@ public class PuzzleGenerator_Window : EditorWindow
 				puzzle.pieceMaterial_assembled = assembledMaterial;
 				puzzle.anchoring = anchoring;
 				puzzle.Prepare();
-
+				
+				Debug.Log("Puzzle generating");
 				if (generateBackground)
 				{
 					puzzle.GenerateBackground(image, i, _centerAnchoring: (anchoring == PuzzleAnchor.Center), _adjustToPuzzle: true);
-					Debug.Log("Background generated");
 				}
 
 			}

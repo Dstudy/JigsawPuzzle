@@ -35,6 +35,7 @@ public class GameController : MonoBehaviour
 	public GameObject winUI;
 	public GameObject winFrame;
 	public GameObject loseUI;
+	public GameObject hintAdUI;
 	public Text hintCounterUI;
 	public Text timerCounterUI;
 	public Text piecesLeftUI;
@@ -67,7 +68,7 @@ public class GameController : MonoBehaviour
 	float timerTime = 20.0f;
 	public float remainingTime, elapsedTime;
 	[SerializeField] bool gameFinished = false;
-    int remainingHints;
+    public int remainingHints;
 	Color backgroundColor;
 	static Vector3 oldPointerPosition;
 
@@ -317,7 +318,7 @@ public class GameController : MonoBehaviour
 		PlayerPrefs.SetInt("currentLevel", currentLevel);
 	}
 	
-	string GetElapsedTime()
+	public string GetElapsedTime()
 	{
 		elapsedTime = Mathf.Abs(timer - (timerTime - Time.time));
 
@@ -556,17 +557,25 @@ public class GameController : MonoBehaviour
     // Show Hint and update remainingHints
     public void ShowHint () 
 	{
-        if (gameFinished  ||  remainingHints == 0)  return;
+        if (gameFinished  ||  remainingHints <= 0)  return;
          else
             puzzle.ReturnPiece (-1);
 
         remainingHints--;
 
-        if (remainingHints == 0)
-           if (hintCounterUI)
-                hintCounterUI.transform.parent.gameObject.SetActive(false);
-           else
-                hintCounterUI.transform.gameObject.SetActive(false);
+        if (remainingHints <= 0){
+	        hintAdUI.SetActive(true);
+	        if (hintCounterUI)
+		        hintCounterUI.transform.parent.gameObject.SetActive(false);
+        }
+        else
+        {
+	        hintAdUI.SetActive(false);
+	        if (hintCounterUI)
+	        {
+		        hintCounterUI.transform.parent.gameObject.SetActive(true);
+	        }
+        }
 
 
         if (hintCounterUI) 
@@ -836,6 +845,7 @@ public class GameController : MonoBehaviour
 		if (PlayerPrefs.HasKey (puzzle.name + "_hints"))
 		{
 			remainingHints = PlayerPrefs.GetInt (puzzle.name + "_hints");
+			remainingHints = 100;
 			if (hintCounterUI)
 				hintCounterUI.text = remainingHints.ToString ();
 		} 
